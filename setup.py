@@ -9,7 +9,7 @@ with open('README.rst') as readme_file, open('HISTORY.rst') as history_file:
 requirements = [
     'Click>=6.0',
     'jinja2',
-    'yaml',
+    'pyyaml',
 ]
 
 test_requirements = [
