@@ -163,6 +163,8 @@ def exec_(is_backup, config):
 
         clear_empty_dirs(dest_dir)
 
+    return 0
+
 
 @click.group()
 def main(args=None):
@@ -182,7 +184,7 @@ def backup(config):
     """
     """
 
-    exec_(True, config)
+    return exec_(True, config)
 
 
 @main.command()
@@ -191,7 +193,7 @@ def recover(config):
     """
     """
 
-    exec_(False, config)
+    return exec_(False, config)
 
 if __name__ == "__main__":
     # execute only if run as a script
