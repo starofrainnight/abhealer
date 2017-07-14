@@ -8,7 +8,8 @@ with open('README.rst') as readme_file, open('HISTORY.rst') as history_file:
 
 requirements = [
     'Click>=6.0',
-    # TODO: put package requirements here
+    'jinja2',
+    'yaml',
 ]
 
 test_requirements = [
