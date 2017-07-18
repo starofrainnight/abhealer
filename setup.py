@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from setuptools import setup
+from setuptools import setup, find_packages
 
 with open('README.rst') as readme_file, open('HISTORY.rst') as history_file:
     long_description = (readme_file.read() + "\n\n" + history_file.read())
 
 requirements = [
-    'Click>=6.0',
+    'click>=6.0',
     'jinja2',
     'pyyaml',
 ]
@@ -24,11 +24,7 @@ setup(
     author="Hong-She Liang",
     author_email='starofrainnight@gmail.com',
     url='https://github.com/starofrainnight/abhealer',
-    packages=[
-        'abhealer',
-    ],
-    package_dir={'abhealer':
-                 'abhealer'},
+    packages=find_packages(),
     entry_points={
         'console_scripts': [
             'abhealer=abhealer.__main__:main'
