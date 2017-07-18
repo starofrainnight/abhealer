@@ -142,7 +142,9 @@ def exec_(is_backup, config):
         with open(fixed_config_file_path, "wb") as f:
             f.write(xml_content.encode("utf-8"))
 
+        print("===== xml begin =====")
         print(xml_content)
+        print("===== xml end =====")
 
         run_client_cmd = backup_script_file_client_path
 
