@@ -126,8 +126,9 @@ def exec_(is_backup, config):
                 f.write("./areca_cl.sh backup -config %s -wdir %s\n" % (
                     config_file_client_path, workspace_client_dir))
             else:
-                f.write("./areca_cl.sh recover -config %s -destination %s -o -nosubdir\n" % (
-                    config_file_client_path, source_client_dir))
+                f.write("./areca_cl.sh recover "
+                        "-config %s -destination %s -o -nosubdir\n" % (
+                            config_file_client_path, source_client_dir))
             f.write("\n")
         os.system("chmod +x %s" % backup_script_file_path)
 
