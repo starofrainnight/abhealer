@@ -12,6 +12,7 @@ import glob
 import shutil
 import fnmatch
 import yaml
+import zipfile
 
 
 # WARNING! When using zip compress (file_compression=True), we got this error
@@ -28,6 +29,95 @@ def get_project_template():
     env = Environment(loader=loader)
 
     return env.get_template("project.bcfg")
+
+
+def folder_to_int(name):
+    parts = name.split("_")
+    first_part = int(parts[0])
+    if len(parts) < 2:
+        second_part = 0
+    else:
+        second_part = int(parts[1])
+
+    return first_part * 1000 + second_part
+
+
+def int_to_folder(aint):
+    first_part = aint // 1000
+    second_part = aint % 1000
+
+    second_part_text = ""
+    if second_part > 0:
+        second_part_text = "_%s" % second_part
+
+    return str(first_part) + second_part_text
+
+
+def find_latest_dir(dest_dir):
+    # Find the latest dir
+    max_value = 0
+    dest_dir = os.path.realpath(str(dest_dir))
+    for afolder in os.listdir(dest_dir):
+        if afolder.endswith("_data"):
+            continue
+
+        if afolder.lower() == "history":
+            continue
+
+        value = folder_to_int(afolder)
+        if value > max_value:
+            max_value = value
+
+    if max_value <= 0:
+        return
+
+    return int_to_folder(max_value)
+
+
+def backup_empty_dirs(source_dir, dest_dir):
+    source_dir = os.path.realpath(str(source_dir))
+    dest_dir = os.path.realpath(str(dest_dir))
+    folder = find_latest_dir(dest_dir)
+
+    empty_dirs_zip_path = os.path.join(dest_dir, folder)
+    empty_dirs_zip_path = empty_dirs_zip_path + "_data"
+    empty_dirs_zip_path = os.path.join(empty_dirs_zip_path, "empty-dirs.zip")
+    if os.path.exists(empty_dirs_zip_path):
+        print("WARNING: File exists : %s" % empty_dirs_zip_path)
+        return
+
+    old_cwd = os.getcwd()
+    try:
+        os.chdir(source_dir)
+
+        print("Generating empty directories list : %s" % empty_dirs_zip_path)
+        for root, dirs, files in os.walk("."):
+            for adir in dirs:
+                apath = os.path.join(root, adir)
+                if os.listdir(apath):
+                    continue
+
+                # FIXME: It won't record the user name belongs to.
+                os.system("zip -0 -y -v %s %s" % (empty_dirs_zip_path, apath))
+
+        print("Finished generate empty directories list")
+    finally:
+        os.chdir(old_cwd)
+
+
+def recover_empty_dirs(source_dir, dest_dir):
+    source_dir = os.path.realpath(str(source_dir))
+    dest_dir = os.path.realpath(str(dest_dir))
+    folder = find_latest_dir(dest_dir)
+
+    empty_dirs_zip_path = os.path.join(dest_dir, folder)
+    empty_dirs_zip_path = empty_dirs_zip_path + "_data"
+    empty_dirs_zip_path = os.path.join(empty_dirs_zip_path, "empty-dirs.zip")
+    if not os.path.exists(empty_dirs_zip_path):
+        print("WARNING: File not exists : %s" % empty_dirs_zip_path)
+        return
+
+    os.system("unzip -v -d %s %s" % (source_dir, empty_dirs_zip_path))
 
 
 def clear_empty_dirs(dest_dir):
@@ -164,6 +254,12 @@ def exec_(is_backup, config):
 
         os.system(backup_cmd)
 
+        if is_backup:
+            backup_empty_dirs(source_dir, dest_dir)
+        else:
+            recover_empty_dirs(source_dir, dest_dir)
+
+        # Don't remove empty dirs, they are valid either !
         clear_empty_dirs(dest_dir)
 
     return 0
@@ -182,7 +278,7 @@ def main(args=None):
 
 
 @main.command()
-@click.option('-c', '--config', type=click.File())
+@click.option('-c', '--config', required=True, type=click.File())
 def backup(config):
     """
     """
@@ -191,7 +287,7 @@ def backup(config):
 
 
 @main.command()
-@click.option('-c', '--config', type=click.File())
+@click.option('-c', '--config', required=True, type=click.File())
 def recover(config):
     """
     """
