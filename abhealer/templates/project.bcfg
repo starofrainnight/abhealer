@@ -2,7 +2,7 @@
 
 <target version="7" uid="{{project_name}}" follow_symlinks="false" register_empty_directories="true" follow_subdirs="true" xml_security_copy="true" name="{{project_name}}" forward_preproc_errors="true" description="">
 <source path="{{src_path}}"/>
-<medium  type="directory" file_compression="true" policy="hd" path="{{dst_path}}" archive_name="%YYYY%%MM%%DD%%hh%%mm%" encrypted="false"  overwrite="false" inspect_file_content="false" zip_level="9" zip_ext="true" zip_charset="UTF-8" zip64="true">
+<medium  type="directory" file_compression="true" policy="hd" path="{{dst_path}}" archive_name="%YYYY%%MM%%DD%%hh%%mm%" encrypted="false"  overwrite="false" inspect_file_content="false" zip_level="9" zip_ext="false" zip_charset="UTF-8" zip64="true">
 <handler type="standard"/>
 <transaction_configuration use_transactions="true" transaction_size="51200"/>
 </medium>
