@@ -177,7 +177,7 @@ def exec_(is_backup, config):
 
     # If dest dir not existed, we must not do any action!
     if not dest_dir.exists():
-        raise OSError('Directory not existed : "%s" !' % dest_dir)
+        raise click.UsageError('Directory not existed : "%s" !' % dest_dir)
 
     if not is_backup:
         if dest_dir.glob("*"):
