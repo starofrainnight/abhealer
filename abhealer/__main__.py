@@ -156,17 +156,10 @@ def clear_empty_dirs(dest_dir):
         #     shutil.rmtree(str(adir), ignore_errors=True)
 
 
-def exec_(is_backup, config):
-    config_file_path = config.name
-
+def exec_(is_backup, vars):
     temp_dir = tempfile.TemporaryDirectory(prefix="dockerred_areca")
-    config_file_name = os.path.basename(config_file_path)
-    config_file_name_without_ext = os.path.splitext(config_file_name)[0]
 
     template = get_project_template()
-    vars = yaml.load(config)
-
-    vars["project_name"] = config_file_name_without_ext
 
     source_dir = vars["src_path"]
     source_client_dir = "/opt/source"
@@ -180,14 +173,14 @@ def exec_(is_backup, config):
         raise click.UsageError('Directory not existed : "%s" !' % dest_dir)
 
     if not is_backup:
-        if dest_dir.glob("*"):
+        if os.listdir(str(source_dir)):
             raise click.UsageError(
                 "Destination must be empty directory!")
 
     dest_client_dir = "/opt/backup"
     workspace_client_dir = "/opt/workspace"
 
-    fixed_config_file_name = config_file_name_without_ext + ".bcfg"
+    fixed_config_file_name = vars["project_name"] + ".bcfg"
     fixed_config_file_path = os.path.join(
         temp_dir.name, fixed_config_file_name)
     fixed_config_file_client_path = os.path.join(
@@ -283,20 +276,32 @@ def main(args=None):
 
 @main.command()
 @click.option('-c', '--config', required=True, type=click.File())
-def backup(config):
+def backup(**kwargs):
     """
     """
 
-    return exec_(True, config)
+    config_file_name = os.path.basename(kwargs["config"].name)
+    vars = yaml.load(kwargs["config"])
+    vars["project_name"] = os.path.splitext(config_file_name)[0]
+
+    return exec_(True, vars)
 
 
 @main.command()
 @click.option('-c', '--config', required=True, type=click.File())
-def recover(config):
+@click.option('-t', '--to-path', help="Recover to path, default to src_path")
+def recover(**kwargs):
     """
     """
 
-    return exec_(False, config)
+    config_file_name = os.path.basename(kwargs["config"].name)
+    vars = yaml.load(kwargs["config"])
+    if kwargs["to_path"]:
+        vars["src_path"] = kwargs["to_path"]
+
+    vars["project_name"] = os.path.splitext(config_file_name)[0]
+
+    return exec_(False, vars)
 
 if __name__ == "__main__":
     # execute only if run as a script
