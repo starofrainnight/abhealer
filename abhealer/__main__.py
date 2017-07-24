@@ -173,8 +173,7 @@ def exec_(is_backup, config):
 
     # Get the parent dir and join with config file base name, don't use
     # specificed dest name
-    dest_dir = pathlib.Path(vars["dst_path"]).parents[0]
-    dest_dir = dest_dir / config_file_name_without_ext
+    dest_dir = pathlib.Path(vars["dst_path"])
 
     # If dest dir not existed, we must not do any action!
     if not dest_dir.exists():
