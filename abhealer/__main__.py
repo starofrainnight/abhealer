@@ -83,8 +83,8 @@ def backup_empty_dirs(source_dir, dest_dir):
     empty_dirs_zip_path = empty_dirs_zip_path + "_data"
     empty_dirs_zip_path = os.path.join(empty_dirs_zip_path, "empty-dirs.zip")
     if os.path.exists(empty_dirs_zip_path):
-        print("WARNING: File exists : %s" % empty_dirs_zip_path)
-        return
+        raise click.UsageError("Empty dirs zip file exists : %s" %
+                               empty_dirs_zip_path)
 
     old_cwd = os.getcwd()
     try:
@@ -114,8 +114,8 @@ def recover_empty_dirs(source_dir, dest_dir):
     empty_dirs_zip_path = empty_dirs_zip_path + "_data"
     empty_dirs_zip_path = os.path.join(empty_dirs_zip_path, "empty-dirs.zip")
     if not os.path.exists(empty_dirs_zip_path):
-        print("WARNING: File not exists : %s" % empty_dirs_zip_path)
-        return
+        raise click.UsageError(
+            "Empty dirs zip file not exists : %s" % empty_dirs_zip_path)
 
     os.system("unzip -v -d %s %s" % (source_dir, empty_dirs_zip_path))
 
