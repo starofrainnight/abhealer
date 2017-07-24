@@ -13,6 +13,7 @@ import shutil
 import fnmatch
 import yaml
 import zipfile
+import stat
 
 
 # WARNING! When using zip compress (file_compression=True), we got this error
@@ -74,53 +75,77 @@ def find_latest_dir(dest_dir):
     return int_to_folder(max_value)
 
 
-def backup_empty_dirs(source_dir, dest_dir):
-    source_dir = os.path.realpath(str(source_dir))
-    dest_dir = os.path.realpath(str(dest_dir))
+def get_dirs_record_path(dest_dir):
+    dest_dir = pathlib.Path(dest_dir)
+
     folder = find_latest_dir(dest_dir)
 
-    empty_dirs_zip_path = os.path.join(dest_dir, folder)
-    empty_dirs_zip_path = empty_dirs_zip_path + "_data"
-    empty_dirs_zip_path = os.path.join(empty_dirs_zip_path, "empty-dirs.zip")
-    if os.path.exists(empty_dirs_zip_path):
-        raise click.UsageError("Empty dirs zip file exists : %s" %
-                               empty_dirs_zip_path)
+    apath = dest_dir / folder
+    apath = pathlib.Path(str(apath) + "_data")
+    apath = apath / "dir_stats.yaml"
 
-    old_cwd = os.getcwd()
-    try:
-        os.chdir(source_dir)
-
-        print("Generating empty directories list : %s" % empty_dirs_zip_path)
-        for root, dirs, files in os.walk("."):
-            for adir in dirs:
-                apath = os.path.join(root, adir)
-                if os.listdir(apath):
-                    continue
-
-                # FIXME: It won't record the user name belongs to.
-                os.system("zip -0 -y -v %s %s" % (empty_dirs_zip_path, apath))
-
-        print("Finished generate empty directories list")
-    finally:
-        os.chdir(old_cwd)
+    return apath
 
 
-def recover_empty_dirs(source_dir, dest_dir):
+def backup_dirs(source_dir, dest_dir):
     source_dir = os.path.realpath(str(source_dir))
     dest_dir = os.path.realpath(str(dest_dir))
-    folder = find_latest_dir(dest_dir)
 
-    empty_dirs_zip_path = os.path.join(dest_dir, folder)
-    empty_dirs_zip_path = empty_dirs_zip_path + "_data"
-    empty_dirs_zip_path = os.path.join(empty_dirs_zip_path, "empty-dirs.zip")
-    if not os.path.exists(empty_dirs_zip_path):
+    record_path = get_dirs_record_path(dest_dir)
+    if record_path.exists():
+        raise click.UsageError("Directories list file exists : %s" %
+                               record_path)
+
+    dir_infos = []
+
+    print("Generating directories list : %s" % record_path)
+    for root, dirs, files in os.walk(source_dir):
+        for adir in dirs:
+            apath = os.path.join(root, adir)
+            apath = os.path.realpath(apath)
+
+            shorten_path = apath[len(source_dir) + 1:]
+
+            apath_object = pathlib.Path(apath)
+
+            dir_infos.append({
+                "path": shorten_path,
+                'mode': os.stat(apath)[stat.ST_MODE] & 0o777,
+                'user': apath_object.owner(),
+                'group': apath_object.group(),
+            })
+
+    with record_path.open("w") as f:
+        yaml.dump(dir_infos, f)
+
+    print("Finished generate directories list")
+
+
+def recover_dirs(source_dir, dest_dir):
+    source_dir = os.path.realpath(str(source_dir))
+    dest_dir = os.path.realpath(str(dest_dir))
+
+    record_path = get_dirs_record_path(dest_dir)
+    if not record_path.exists():
         raise click.UsageError(
-            "Empty dirs zip file not exists : %s" % empty_dirs_zip_path)
+            "Dirs file not exists : %s" % record_path)
 
-    os.system("unzip -v -d %s %s" % (source_dir, empty_dirs_zip_path))
+    with record_path.open() as f:
+        dir_infos = yaml.load(f)
+
+    for dir_info in dir_infos:
+        full_path = os.path.join(source_dir, dir_info["path"])
+        full_path = pathlib.Path(full_path)
+
+        if not full_path.exists():
+            full_path.mkdir(mode=dir_info["mode"])
+        else:
+            full_path.chmod(dir_info["mode"])
+
+    print("Recover directories permissions completed!")
 
 
-def clear_empty_dirs(dest_dir):
+def clear_dirs(dest_dir):
     # Clear empty backups that only have
     dirs = glob.glob(os.path.join(str(dest_dir), "*"))
     for adir in dirs:
@@ -243,7 +268,7 @@ def exec_(is_backup, vars):
         volume_options += " -v %s:%s " % (
             dest_dir.resolve(), dest_client_dir)
 
-        clear_empty_dirs(dest_dir)
+        clear_dirs(dest_dir)
 
         backup_cmd = "docker run -t --rm %s %s %s" % (
             volume_options, docker_image, run_client_cmd)
@@ -252,12 +277,12 @@ def exec_(is_backup, vars):
         os.system(backup_cmd)
 
         if is_backup:
-            backup_empty_dirs(source_dir, dest_dir)
+            backup_dirs(source_dir, dest_dir)
         else:
-            recover_empty_dirs(source_dir, dest_dir)
+            recover_dirs(source_dir, dest_dir)
 
         # Don't remove empty dirs, they are valid either !
-        clear_empty_dirs(dest_dir)
+        clear_dirs(dest_dir)
 
     return 0
 
