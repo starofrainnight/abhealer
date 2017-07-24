@@ -21,7 +21,7 @@ abhealer
 abhealer
 
 
-* Free software: MIT
+* Free software: Apache License 2.0
 * Documentation: https://abhealer.readthedocs.io.
 
 
