@@ -261,6 +261,9 @@ def exec_(is_backup, vars):
         run_client_cmd = backup_script_file_client_path
 
         volume_options = ""
+        # Map users and groups
+        volume_options += " -v /etc/passwd:/etc/passwd "
+        volume_options += " -v /etc/group:/etc/group "
         volume_options += " -v %s:%s " % (
             os.path.abspath(temp_dir.name), workspace_client_dir)
         volume_options += " -v %s:%s " % (
