@@ -179,6 +179,11 @@ def exec_(is_backup, config):
     if not dest_dir.exists():
         raise OSError('Directory not existed : "%s" !' % dest_dir)
 
+    if not is_backup:
+        if dest_dir.glob("*"):
+            raise click.UsageError(
+                "Destination must be empty directory!")
+
     dest_client_dir = "/opt/backup"
     workspace_client_dir = "/opt/workspace"
 
