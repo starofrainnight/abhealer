@@ -124,30 +124,112 @@ def get_trace_infos(dest_dir):
     return trace_infos
 
 
+def normal_path(apath):
+    if sys.platform == 'win32':
+        return os.path.abspath(apath).replace("/", "\\")
+    else:
+        return os.path.abspath(apath).replace("\\", "/")
+
+
+def compute_related_path(link, target):
+    link = pathlib.Path(normal_path(str(link)))
+    target = pathlib.Path(normal_path(str(target)))
+
+    link_parents = [str(p) for p in reversed(link.parents)]
+    target_parents = [str(p) for p in reversed(target.parents)]
+
+    max_parents = min(len(link.parents), len(target.parents))
+    found_index = max_parents
+    for i in range(0, max_parents):
+        if link_parents[i] != target_parents[i]:
+            found_index = i
+            break
+
+    if len(link.parents) > len(target.parents):
+        return os.path.join(
+            "../" * (len(link.parents) - found_index), target.name)
+    else:
+        return os.path.join(*target_parents[found_index:], target.name)
+
+
+def get_path_owner(apath):
+    apath = str(apath)
+    if os.path.islink(apath):
+        return pwd.getpwuid(os.lstat(apath).st_uid).pw_name
+    else:
+        return pwd.getpwuid(os.stat(apath).st_uid).pw_name
+
+
+def get_path_group(apath):
+    apath = str(apath)
+    if os.path.islink(apath):
+        return grp.getgrgid(os.lstat(apath).st_gid).gr_name
+    else:
+        return grp.getgrgid(os.stat(apath).st_gid).gr_name
+
+
+def chown(apath, uid, gid):
+    apath = str(apath)
+    if os.path.islink(apath):
+        os.lchown(apath, uid, gid)
+    else:
+        os.chown(apath, uid, gid)
+
+
 def recover_dirs(source_dir, dest_dir):
 
     source_dir = os.path.realpath(str(source_dir))
     dest_dir = os.path.realpath(str(dest_dir))
 
+    client_source_dir = "/opt/source"
+
     trace_infos = get_trace_infos(dest_dir)
+
     for k, v in trace_infos.items():
         # Only process directories
-        if not k.startswith("d"):
+        if not k.startswith("d") and not k.startswith("s"):
             continue
 
         source_path = pathlib.Path(source_dir) / k[1:]
-        required_mode = int(v[2]) & 0o777
-        if source_path.exists():
-            if (source_path.stat()[stat.ST_MODE] & 0o777) != required_mode:
-                source_path.chmod(required_mode)
-        else:
-            source_path.mkdir(mode=required_mode)
+        client_source_path = pathlib.Path(client_source_dir) / k[1:]
 
-        if ((source_path.owner() != v[3]) or (source_path.group() != v[4])):
-            os.chown(
+        if k.startswith("d"):
+            mode_index = 2
+            owner_index = 3
+            group_index = 4
+        elif k.startswith("s"):
+            mode_index = 3
+            owner_index = 4
+            group_index = 5
+
+        required_mode = int(v[mode_index]) & 0o777
+
+        if k.startswith("d"):
+
+            if source_path.exists():
+                if (source_path.stat()[stat.ST_MODE] & 0o777) != required_mode:
+                    source_path.chmod(required_mode)
+            else:
+                source_path.mkdir(mode=required_mode)
+
+        elif k.startswith("s"):
+            client_link_path = v[1][1:]
+
+            if client_link_path.startswith(client_source_dir):
+                source_path.unlink()
+                target = compute_related_path(
+                    client_source_path, client_link_path)
+                source_path.symlink_to(target)
+            else:
+                source_path.unlink()
+                source_path.symlink_to(client_link_path)
+
+        if ((get_path_owner(source_path) != v[owner_index])
+                or (get_path_group(source_path) != v[group_index])):
+            chown(
                 str(source_path),
-                pwd.getpwnam(v[3]).pw_uid,
-                grp.getgrnam(v[4]).gr_gid)
+                pwd.getpwnam(v[owner_index]).pw_uid,
+                grp.getgrnam(v[group_index]).gr_gid)
 
     print("Recover directories permissions completed!")
 
