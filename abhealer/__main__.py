@@ -124,18 +124,6 @@ def get_trace_infos(dest_dir):
     return trace_infos
 
 
-def get_dirs_record_path(dest_dir):
-    dest_dir = pathlib.Path(dest_dir)
-
-    folder = find_latest_dir(dest_dir)
-
-    apath = dest_dir / folder
-    apath = pathlib.Path(str(apath) + "_data")
-    apath = apath / "dir_stats.yaml"
-
-    return apath
-
-
 def recover_dirs(source_dir, dest_dir):
 
     source_dir = os.path.realpath(str(source_dir))
