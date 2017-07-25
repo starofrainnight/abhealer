@@ -15,6 +15,8 @@ import yaml
 import zipfile
 import gzip
 import stat
+import pwd
+import grp
 
 
 # WARNING! When using zip compress (file_compression=True), we got this error
@@ -152,6 +154,12 @@ def recover_dirs(source_dir, dest_dir):
                 source_path.chmod(required_mode)
         else:
             source_path.mkdir(mode=required_mode)
+
+        if ((source_path.owner() != v[3]) or (source_path.group() != v[4])):
+            os.chown(
+                str(source_path),
+                pwd.getpwnam(v[3]).pw_uid,
+                grp.getgrnam(v[4]).gr_gid)
 
     print("Recover directories permissions completed!")
 
