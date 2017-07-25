@@ -13,6 +13,7 @@ import shutil
 import fnmatch
 import yaml
 import zipfile
+import gzip
 import stat
 
 
@@ -54,6 +55,24 @@ def int_to_folder(aint):
     return str(first_part) + second_part_text
 
 
+def find_data_dirs(dest_dir):
+    data_dirs = []
+    dest_dir = os.path.realpath(str(dest_dir))
+    for afolder in os.listdir(dest_dir):
+        if afolder.endswith("_data"):
+            continue
+
+        if afolder.lower() == "history":
+            continue
+
+        data_dirs.append(afolder)
+
+    data_dirs = sorted(data_dirs, key=lambda x: folder_to_int(x))
+    data_dirs = [(adir + "_data") for adir in data_dirs]
+
+    return data_dirs
+
+
 def find_latest_dir(dest_dir):
     # Find the latest dir
     max_value = 0
@@ -75,6 +94,34 @@ def find_latest_dir(dest_dir):
     return int_to_folder(max_value)
 
 
+def get_trace_infos(dest_dir):
+    data_dirs = find_data_dirs(dest_dir)
+
+    trace_infos = dict()
+    for adir in data_dirs:
+        info_zip_path = os.path.join(str(dest_dir), adir, "trace")
+        with zipfile.ZipFile(info_zip_path) as info_zip_file:
+            trace_file = io.BytesIO(info_zip_file.read("trace"))
+
+        with gzip.GzipFile(fileobj=trace_file) as trace_zip_file:
+            trace_info = trace_zip_file.read().decode()
+
+        # Parse trace info
+        lines = trace_info.splitlines()
+        for aline in lines:
+            aline = aline.strip()
+            if not aline:
+                continue
+
+            if aline.startswith('#'):
+                continue
+
+            infos = aline.split(';')
+            trace_infos[infos[0]] = infos
+
+    return trace_infos
+
+
 def get_dirs_record_path(dest_dir):
     dest_dir = pathlib.Path(dest_dir)
 
@@ -87,60 +134,24 @@ def get_dirs_record_path(dest_dir):
     return apath
 
 
-def backup_dirs(source_dir, dest_dir):
-    source_dir = os.path.realpath(str(source_dir))
-    dest_dir = os.path.realpath(str(dest_dir))
-
-    record_path = get_dirs_record_path(dest_dir)
-    if record_path.exists():
-        raise click.UsageError("Directories list file exists : %s" %
-                               record_path)
-
-    dir_infos = []
-
-    print("Generating directories list : %s" % record_path)
-    for root, dirs, files in os.walk(source_dir):
-        for adir in dirs:
-            apath = os.path.join(root, adir)
-            apath = os.path.realpath(apath)
-
-            shorten_path = apath[len(source_dir) + 1:]
-
-            apath_object = pathlib.Path(apath)
-
-            dir_infos.append({
-                "path": shorten_path,
-                'mode': os.stat(apath)[stat.ST_MODE] & 0o777,
-                'user': apath_object.owner(),
-                'group': apath_object.group(),
-            })
-
-    with record_path.open("w") as f:
-        yaml.dump(dir_infos, f)
-
-    print("Finished generate directories list")
-
-
 def recover_dirs(source_dir, dest_dir):
+
     source_dir = os.path.realpath(str(source_dir))
     dest_dir = os.path.realpath(str(dest_dir))
 
-    record_path = get_dirs_record_path(dest_dir)
-    if not record_path.exists():
-        raise click.UsageError(
-            "Dirs file not exists : %s" % record_path)
+    trace_infos = get_trace_infos(dest_dir)
+    for k, v in trace_infos.items():
+        # Only process directories
+        if not k.startswith("d"):
+            continue
 
-    with record_path.open() as f:
-        dir_infos = yaml.load(f)
-
-    for dir_info in dir_infos:
-        full_path = os.path.join(source_dir, dir_info["path"])
-        full_path = pathlib.Path(full_path)
-
-        if not full_path.exists():
-            full_path.mkdir(mode=dir_info["mode"])
+        source_path = pathlib.Path(source_dir) / k[1:]
+        required_mode = int(v[2]) & 0o777
+        if source_path.exists():
+            if (source_path.stat()[stat.ST_MODE] & 0o777) != required_mode:
+                source_path.chmod(required_mode)
         else:
-            full_path.chmod(dir_info["mode"])
+            source_path.mkdir(mode=required_mode)
 
     print("Recover directories permissions completed!")
 
@@ -279,9 +290,7 @@ def exec_(is_backup, vars):
 
         os.system(backup_cmd)
 
-        if is_backup:
-            backup_dirs(source_dir, dest_dir)
-        else:
+        if not is_backup:
             recover_dirs(source_dir, dest_dir)
 
         # Don't remove empty dirs, they are valid either !
