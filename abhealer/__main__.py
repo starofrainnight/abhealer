@@ -149,7 +149,14 @@ def compute_related_path(link, target):
         return os.path.join(
             "../" * (len(link.parents) - found_index), target.name)
     else:
-        return os.path.join(*target_parents[found_index:], target.name)
+        # Don't join like this:
+        #
+        #    os.path.join(*target_parents[found_index:], target.name)
+        #
+        # This syntax will lead python below v3.4 report error : "SyntaxError:
+        # only named arguments may follow *expression"!
+        return os.path.join(
+            os.path.join(*target_parents[found_index:]), target.name)
 
 
 def get_path_owner(apath):
