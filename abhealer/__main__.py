@@ -287,18 +287,19 @@ def exec_(is_backup, vars):
 
     # Get the parent dir and join with config file base name, don't use
     # specificed dest name
-    dest_dir = pathlib.Path(vars["dst_path"])
+    repository_dir = pathlib.Path(vars["repository"])
 
     # If dest dir not existed, we must not do any action!
-    if not dest_dir.exists():
-        raise click.UsageError('Directory not existed : "%s" !' % dest_dir)
+    if not repository_dir.exists():
+        raise click.UsageError(
+            'Directory not existed : "%s" !' % repository_dir)
 
     if not is_backup:
         if os.listdir(str(source_dir)):
             raise click.UsageError(
                 "Destination must be empty directory!")
 
-    dest_client_dir = "/opt/backup"
+    repository_client_dir = "/opt/backup"
     workspace_client_dir = "/opt/workspace"
 
     fixed_config_file_name = vars["project_name"] + ".bcfg"
@@ -309,7 +310,7 @@ def exec_(is_backup, vars):
 
     # Change paths
     vars["src_path"] = source_client_dir
-    vars["dst_path"] = dest_client_dir
+    vars["repository"] = repository_client_dir
 
     docker_image = "starofrainnight/areca-backup"
 
@@ -365,9 +366,9 @@ def exec_(is_backup, vars):
         volume_options += " -v %s:%s " % (
             os.path.abspath(source_dir), source_client_dir)
         volume_options += " -v %s:%s " % (
-            dest_dir.resolve(), dest_client_dir)
+            repository_dir.resolve(), repository_client_dir)
 
-        clear_dirs(dest_dir)
+        clear_dirs(repository_dir)
 
         backup_cmd = "docker run -t --rm %s %s %s" % (
             volume_options, docker_image, run_client_cmd)
@@ -376,10 +377,10 @@ def exec_(is_backup, vars):
         os.system(backup_cmd)
 
         if not is_backup:
-            recover_dirs(source_dir, dest_dir)
+            recover_dirs(source_dir, repository_dir)
 
         # Don't remove empty dirs, they are valid either !
-        clear_dirs(dest_dir)
+        clear_dirs(repository_dir)
 
     return 0
 
