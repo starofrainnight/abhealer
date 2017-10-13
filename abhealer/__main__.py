@@ -299,7 +299,7 @@ def exec_(is_backup, vars):
             raise click.UsageError(
                 "Destination must be empty directory!")
 
-    repository_client_dir = "/opt/backup"
+    repository_client_dir = "/opt/repository"
     workspace_client_dir = "/opt/workspace"
 
     fixed_config_file_name = vars["project_name"] + ".bcfg"
