@@ -469,6 +469,7 @@ def proj(ctx, config, name, to_path):
         if (len(source) > 1) and (len(source[1].strip()) > 0):
             vars["project_name"] = source[1].strip()
 
+        click.echo("%s to %s" % (vars["project_name"], name))
         if vars["project_name"] != name:
             continue
 
@@ -479,9 +480,10 @@ def proj(ctx, config, name, to_path):
             return ret
 
         # Only exactly one project with spectific name.
-        break
+        return 0
 
-    return 0
+    # If no project founded, we should raise error
+    raise click.BadArgumentUsage("Project \"%s\" not found!" % name)
 
 
 @recover.command()
