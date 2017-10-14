@@ -18,7 +18,7 @@ test_requirements = [
 
 setup(
     name='abhealer',
-    version='0.2.4',
+    version='0.3.0',
     description="abhealer",
     long_description=long_description,
     author="Hong-She Liang",
