@@ -425,6 +425,10 @@ def backup(ctx, config):
 
     vars = yaml.load(config)
     for source in vars["sources"]:
+        # Support path only source
+        if isinstance(source, six.string_types):
+            source = [source]
+
         vars["src_path"] = source[0]
         vars["project_name"] = os.path.splitext(
             os.path.basename(source[0]))[0]
