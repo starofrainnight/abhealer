@@ -36,5 +36,5 @@ Credits
 This package was created with Cookiecutter_ and the `PyPackageTemplate`_ project template.
 
 .. _Cookiecutter: https://github.com/audreyr/cookiecutter
-.. _`PyPackageTemplate`: https://github.com/audreyr/cookiecutter-pypackage
+.. _`PyPackageTemplate`: https://github.com/starofrainnight/rtpl-pypackage
 
