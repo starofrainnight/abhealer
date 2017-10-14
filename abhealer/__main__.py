@@ -17,6 +17,7 @@ import gzip
 import stat
 import pwd
 import grp
+import copy
 
 
 # WARNING! When using zip compress (file_compression=True), we got this error
@@ -148,6 +149,8 @@ def compute_related_path(link, target):
     if len(link.parents) > len(target.parents):
         return os.path.join(
             "../" * (len(link.parents) - found_index), target.name)
+    elif found_index == max_parents:
+        return target.name
     else:
         # Don't join like this:
         #
@@ -278,28 +281,32 @@ def clear_dirs(dest_dir):
 
 
 def exec_(is_backup, vars):
+    vars = copy.deepcopy(vars)
+
     temp_dir = tempfile.TemporaryDirectory(prefix="dockerred_areca")
 
     template = get_project_template()
 
-    source_dir = vars["src_path"]
+    source_dir = str(vars["src_path"])
     source_client_dir = "/opt/source"
 
     # Get the parent dir and join with config file base name, don't use
     # specificed dest name
-    repository_dir = pathlib.Path(vars["repository"])
+    dest_dir = pathlib.Path(vars["repository"]) / vars["project_name"]
 
-    # If dest dir not existed, we must not do any action!
-    if not repository_dir.exists():
-        raise click.UsageError(
-            'Directory not existed : "%s" !' % repository_dir)
+    # If dest dir not existed, we must create it.
+    if not dest_dir.exists():
+        dest_dir.mkdir(parents=True)
 
     if not is_backup:
-        if os.listdir(str(source_dir)):
+        if not os.path.exists(source_dir):
+            os.makedirs(source_dir, exist_ok=True)
+
+        if os.listdir(source_dir):
             raise click.UsageError(
                 "Destination must be empty directory!")
 
-    repository_client_dir = "/opt/repository"
+    dest_client_dir = "/opt/backup"
     workspace_client_dir = "/opt/workspace"
 
     fixed_config_file_name = vars["project_name"] + ".bcfg"
@@ -310,7 +317,7 @@ def exec_(is_backup, vars):
 
     # Change paths
     vars["src_path"] = source_client_dir
-    vars["repository"] = repository_client_dir
+    vars["dst_path"] = dest_client_dir
 
     docker_image = "starofrainnight/areca-backup"
 
@@ -366,9 +373,9 @@ def exec_(is_backup, vars):
         volume_options += " -v %s:%s " % (
             os.path.abspath(source_dir), source_client_dir)
         volume_options += " -v %s:%s " % (
-            repository_dir.resolve(), repository_client_dir)
+            dest_dir.resolve(), dest_client_dir)
 
-        clear_dirs(repository_dir)
+        clear_dirs(dest_dir)
 
         backup_cmd = "docker run -t --rm %s %s %s" % (
             volume_options, docker_image, run_client_cmd)
@@ -377,16 +384,17 @@ def exec_(is_backup, vars):
         os.system(backup_cmd)
 
         if not is_backup:
-            recover_dirs(source_dir, repository_dir)
+            recover_dirs(source_dir, dest_dir)
 
         # Don't remove empty dirs, they are valid either !
-        clear_dirs(repository_dir)
+        clear_dirs(dest_dir)
 
     return 0
 
 
 @click.group()
-def main(args=None):
+@click.pass_context
+def cli(ctx):
     """
     This program is a helper for dockerred Areca Backup.
 
@@ -396,35 +404,96 @@ def main(args=None):
     Areca Backup won't record the empty directories and their properties
     """
 
+    pass
 
-@main.command()
-@click.option('-c', '--config', required=True, type=click.File())
-def backup(**kwargs):
+def main():
+    return cli(obj={})
+
+
+@cli.command()
+@click.argument('config', type=click.File())
+@click.pass_context
+def backup(ctx, config):
     """
     """
 
-    config_file_name = os.path.basename(kwargs["config"].name)
-    vars = yaml.load(kwargs["config"])
-    vars["project_name"] = os.path.splitext(config_file_name)[0]
+    vars = yaml.load(config)
+    for source in vars["sources"]:
+        vars["src_path"] = source[0]
+        vars["project_name"] = os.path.splitext(
+            os.path.basename(source[0]))[0]
+        if (len(source) > 1) and (len(source[1].strip()) > 0):
+            vars["project_name"] = source[1].strip()
 
-    return exec_(True, vars)
+        ret = exec_(True, vars)
+        if ret:
+            return ret
+
+    return 0
 
 
-@main.command()
-@click.option('-c', '--config', required=True, type=click.File())
-@click.option('-t', '--to-path', help="Recover to path, default to src_path")
-def recover(**kwargs):
+@cli.group()
+@click.pass_context
+def recover(ctx):
+    pass
+
+
+@recover.command()
+@click.argument('config', type=click.File())
+@click.argument('name')
+@click.argument('to_path')
+@click.pass_context
+def proj(ctx, config, name, to_path):
     """
     """
 
-    config_file_name = os.path.basename(kwargs["config"].name)
-    vars = yaml.load(kwargs["config"])
-    if kwargs["to_path"]:
-        vars["src_path"] = kwargs["to_path"]
+    vars = yaml.load(config)
 
-    vars["project_name"] = os.path.splitext(config_file_name)[0]
+    for source in vars["sources"]:
+        vars["project_name"] = os.path.splitext(
+            os.path.basename(source[0]))[0]
 
-    return exec_(False, vars)
+        if (len(source) > 1) and (len(source[1].strip()) > 0):
+            vars["project_name"] = source[1].strip()
+
+        if vars["project_name"] != name:
+            continue
+
+        vars["src_path"] = to_path
+
+        ret = exec_(False, vars)
+        if ret:
+            return ret
+
+        # Only exactly one project with spectific name.
+        break
+
+    return 0
+
+
+@recover.command()
+@click.argument('config', type=click.File())
+@click.argument('to_path')
+@click.pass_context
+def repo(ctx, config, to_path):
+    """
+    """
+
+    vars = yaml.load(config)
+    for source in vars["sources"]:
+        vars["project_name"] = os.path.splitext(
+            os.path.basename(source[0]))[0]
+
+        if (len(source) > 1) and (len(source[1].strip()) > 0):
+            vars["project_name"] = source[1].strip()
+
+        vars["src_path"] = os.path.join(
+            to_path, vars["project_name"])
+
+        if exec_(False, vars):
+            break
+
+    return 0
 
 if __name__ == "__main__":
     # execute only if run as a script
