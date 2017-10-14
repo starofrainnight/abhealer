@@ -394,7 +394,7 @@ def exec_(is_backup, vars):
 
 @click.group()
 @click.pass_context
-def cli(ctx):
+def main(ctx):
     """
     This program is a helper for dockerred Areca Backup.
 
@@ -404,13 +404,7 @@ def cli(ctx):
     Areca Backup won't record the empty directories and their properties
     """
 
-    pass
-
-def main():
-    return cli(obj={})
-
-
-@cli.command()
+@main.command()
 @click.argument('config', type=click.File())
 @click.pass_context
 def backup(ctx, config):
@@ -442,7 +436,7 @@ def backup(ctx, config):
     return 0
 
 
-@cli.group()
+@main.group()
 @click.pass_context
 def recover(ctx):
     """
