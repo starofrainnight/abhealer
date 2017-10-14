@@ -463,6 +463,10 @@ def proj(ctx, config, name, to_path):
     vars = yaml.load(config)
 
     for source in vars["sources"]:
+        # Support path only source
+        if isinstance(source, six.string_types):
+            source = [source]
+
         vars["project_name"] = os.path.splitext(
             os.path.basename(source[0]))[0]
 
@@ -501,6 +505,10 @@ def repo(ctx, config, to_path):
 
     vars = yaml.load(config)
     for source in vars["sources"]:
+        # Support path only source
+        if isinstance(source, six.string_types):
+            source = [source]
+
         vars["project_name"] = os.path.splitext(
             os.path.basename(source[0]))[0]
 
