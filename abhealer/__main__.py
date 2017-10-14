@@ -415,6 +415,12 @@ def main():
 @click.pass_context
 def backup(ctx, config):
     """
+    Backup a series projects to repository.
+
+    Project and repository paths are defined in config file.
+
+    \b
+    CONFIG: The config file (in YAML format) path.
     """
 
     vars = yaml.load(config)
@@ -435,6 +441,9 @@ def backup(ctx, config):
 @cli.group()
 @click.pass_context
 def recover(ctx):
+    """
+    Recover projects from backup repository.
+    """
     pass
 
 
@@ -445,6 +454,12 @@ def recover(ctx):
 @click.pass_context
 def proj(ctx, config, name, to_path):
     """
+    Only recover specific project
+
+    \b
+    CONFIG  : The config file (in YAML format) path
+    NAME    : Project name
+    TO_PATH : Where you store the recovered project
     """
 
     vars = yaml.load(config)
@@ -477,6 +492,11 @@ def proj(ctx, config, name, to_path):
 @click.pass_context
 def repo(ctx, config, to_path):
     """
+    Recover whole repository
+
+    \b
+    CONFIG  : The config file (in YAML format) path
+    TO_PATH : Where you store the recovered project
     """
 
     vars = yaml.load(config)
