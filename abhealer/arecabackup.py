@@ -36,6 +36,10 @@ class Repository(object):
         return self._base_dir
 
     @property
+    def cfg_dir(self):
+        return self._cfg_dir
+
+    @property
     def projects(self):
         pass
 
