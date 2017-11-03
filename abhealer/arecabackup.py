@@ -43,7 +43,7 @@ class DataInfo(object):
 
     def __repr__(self):
         data_dir_suffix = "_data"
-        return "<%s(\"%s\")>" % (
+        return "%s(\"%s\")" % (
             type(self).__qualname__,
             self.base_dir.name[:-len(data_dir_suffix)])
 
@@ -85,7 +85,7 @@ class Project(object):
         return infos
 
     def __repr__(self):
-        return "<%s(\"%s\")>" % (type(self).__qualname__, self.name)
+        return "%s(\"%s\")" % (type(self).__qualname__, self.name)
 
 
 class Repository(object):
