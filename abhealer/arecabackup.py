@@ -6,6 +6,7 @@ Areca Backup.
 '''
 
 import pathlib
+import arrow
 import xml.etree.ElementTree as etree
 from . import abhealer
 
@@ -41,6 +42,19 @@ class DataInfo(object):
     @property
     def base_dir(self):
         return self._base_dir
+
+    @property
+    def datetime(self):
+        value = str(int(self))
+        return arrow.Arrow(
+            int(value[:4]),
+            int(value[4:6]),
+            int(value[6:8]),
+            int(value[8:10]),
+            int(value[10:12]),
+            0,
+            int(value[12:]),
+        ).datetime
 
     def _name_without_suffix(self):
         return self.base_dir.name[:-len(self.DIR_SUFFIX)]
