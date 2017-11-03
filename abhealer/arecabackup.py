@@ -7,6 +7,10 @@ Areca Backup.
 
 import pathlib
 import arrow
+import zipfile
+import gzip
+import io
+import os.path
 import xml.etree.ElementTree as etree
 from . import abhealer
 
@@ -55,6 +59,32 @@ class DataInfo(object):
             0,
             int(value[12:]),
         ).datetime
+
+    @property
+    def traces(self):
+        infos = dict()
+
+        info_zip_path = self.base_dir / "trace"
+        with zipfile.ZipFile(str(info_zip_path)) as info_zip_file:
+            trace_file = io.BytesIO(info_zip_file.read("trace"))
+
+        with gzip.GzipFile(fileobj=trace_file) as trace_zip_file:
+            trace_info = trace_zip_file.read().decode()
+
+        # Parse trace info
+        lines = trace_info.splitlines()
+        for aline in lines:
+            aline = aline.strip()
+            if not aline:
+                continue
+
+            if aline.startswith('#'):
+                continue
+
+            parties = aline.split(';')
+            infos[parties[0]] = parties
+
+        return infos
 
     def _name_without_suffix(self):
         return self.base_dir.name[:-len(self.DIR_SUFFIX)]
