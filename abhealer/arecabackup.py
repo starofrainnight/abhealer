@@ -10,6 +10,44 @@ import xml.etree.ElementTree as etree
 from . import abhealer
 
 
+def folder_to_int(name):
+    parts = name.split("_")
+    first_part = int(parts[0])
+    if len(parts) < 2:
+        second_part = 0
+    else:
+        second_part = int(parts[1])
+
+    return first_part * 1000 + second_part
+
+
+def int_to_folder(aint):
+    first_part = aint // 1000
+    second_part = aint % 1000
+
+    second_part_text = ""
+    if second_part > 0:
+        second_part_text = "_%s" % second_part
+
+    return str(first_part) + second_part_text
+
+
+class DataInfo(object):
+
+    def __init__(self, adir):
+        self._base_dir = adir
+
+    @property
+    def base_dir(self):
+        return self._base_dir
+
+    def __repr__(self):
+        data_dir_suffix = "_data"
+        return "<%s(\"%s\")>" % (
+            type(self).__qualname__,
+            self.base_dir.name[:-len(data_dir_suffix)])
+
+
 class Project(object):
 
     def __init__(self, repository, cfg, adir):
@@ -28,6 +66,23 @@ class Project(object):
     @property
     def name(self):
         return self.base_dir.name
+
+    @property
+    def data_infos(self):
+        infos = []
+        data_dir_suffix = "_data"
+        for subdir in self.base_dir.iterdir():
+            if not subdir.name.endswith(data_dir_suffix):
+                continue
+
+            infos.append(DataInfo(subdir))
+
+        infos = sorted(
+            infos,
+            key=lambda x: folder_to_int(
+                x.base_dir.name[:-len(data_dir_suffix)]))
+
+        return infos
 
     def __repr__(self):
         return "<%s(\"%s\")>" % (type(self).__qualname__, self.name)
