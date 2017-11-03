@@ -18,6 +18,7 @@ import stat
 import pwd
 import grp
 import copy
+from whichcraft import which
 
 
 # WARNING! When using zip compress (file_compression=True), we got this error
@@ -186,12 +187,15 @@ def chown(apath, uid, gid):
         os.chown(apath, uid, gid)
 
 
-def recover_dirs(source_dir, dest_dir):
+def recover_dirs(is_dockerized, orig_dir, source_dir, dest_dir):
 
     source_dir = os.path.realpath(str(source_dir))
     dest_dir = os.path.realpath(str(dest_dir))
 
-    client_source_dir = "/opt/source"
+    if is_dockerized:
+        client_source_dir = "/opt/source"
+    else:
+        client_source_dir = orig_dir
 
     trace_infos = get_trace_infos(dest_dir)
 
@@ -280,7 +284,7 @@ def clear_dirs(dest_dir):
         #     shutil.rmtree(str(adir), ignore_errors=True)
 
 
-def exec_(is_backup, vars):
+def exec_(is_backup, is_dockerized, vars):
     vars = copy.deepcopy(vars)
 
     temp_dir = tempfile.TemporaryDirectory(prefix="dockerred_areca")
@@ -288,7 +292,6 @@ def exec_(is_backup, vars):
     template = get_project_template()
 
     source_dir = str(vars["src_path"])
-    source_client_dir = "/opt/source"
 
     # Get the parent dir and join with config file base name, don't use
     # specificed dest name
@@ -306,8 +309,14 @@ def exec_(is_backup, vars):
             raise click.UsageError(
                 "Destination must be empty directory!")
 
-    dest_client_dir = "/opt/backup"
-    workspace_client_dir = "/opt/workspace"
+    if is_dockerized:
+        source_client_dir = "/opt/source"
+        dest_client_dir = "/opt/backup"
+        workspace_client_dir = "/opt/workspace"
+    else:
+        source_client_dir = os.path.abspath(source_dir)
+        dest_client_dir = os.path.abspath(str(dest_dir))
+        workspace_client_dir = os.path.abspath(temp_dir.name)
 
     fixed_config_file_name = vars["project_name"] + ".bcfg"
     fixed_config_file_path = os.path.join(
@@ -335,9 +344,15 @@ def exec_(is_backup, vars):
         workspace_client_dir, backup_script_file_name)
 
     with temp_dir:
+        if is_dockerized:
+            areca_cl_script_dir = "/usr/local/bin"
+        else:
+            areca_cl_script_dir = which("areca_cl.sh")
+            areca_cl_script_dir = os.path.dirname(areca_cl_script_dir)
+
         with open(backup_script_file_path, "w") as f:
             f.write("#!/bin/sh\n")
-            f.write("cd /usr/local/bin\n")
+            f.write("cd %s\n" % areca_cl_script_dir)
             if is_backup:
                 f.write("./areca_cl.sh backup -config %s -wdir %s\n" % (
                     config_file_client_path, workspace_client_dir))
@@ -364,27 +379,32 @@ def exec_(is_backup, vars):
 
         run_client_cmd = backup_script_file_client_path
 
-        volume_options = ""
-        # Map users and groups
-        volume_options += " -v /etc/passwd:/etc/passwd "
-        volume_options += " -v /etc/group:/etc/group "
-        volume_options += " -v %s:%s " % (
-            os.path.abspath(temp_dir.name), workspace_client_dir)
-        volume_options += " -v %s:%s " % (
-            os.path.abspath(source_dir), source_client_dir)
-        volume_options += " -v %s:%s " % (
-            dest_dir.resolve(), dest_client_dir)
+        if is_dockerized:
+            volume_options = ""
+            # Map users and groups
+            volume_options += " -v /etc/passwd:/etc/passwd "
+            volume_options += " -v /etc/group:/etc/group "
+            volume_options += " -v %s:%s " % (
+                os.path.abspath(temp_dir.name), workspace_client_dir)
+            volume_options += " -v %s:%s " % (
+                os.path.abspath(source_dir), source_client_dir)
+            volume_options += " -v %s:%s " % (
+                dest_dir.resolve(), dest_client_dir)
+
+            backup_cmd = "docker run -t --rm %s %s %s" % (
+                volume_options, docker_image, run_client_cmd)
+        else:
+            backup_cmd = run_client_cmd
 
         clear_dirs(dest_dir)
 
-        backup_cmd = "docker run -t --rm %s %s %s" % (
-            volume_options, docker_image, run_client_cmd)
         print("Executing : %s" % backup_cmd)
 
         os.system(backup_cmd)
 
         if not is_backup:
-            recover_dirs(source_dir, dest_dir)
+            recover_dirs(
+                is_dockerized, vars["orig_path"], source_dir, dest_dir)
 
         # Don't remove empty dirs, they are valid either !
         clear_dirs(dest_dir)
@@ -393,8 +413,14 @@ def exec_(is_backup, vars):
 
 
 @click.group()
+@click.option(
+    '-m', '--mode',
+    type=click.Choice(['auto', 'local', 'docker']),
+    help='''How we search areca_cl.sh, if mode=auto we will search in path and \
+use docker version if mode=docker.''',
+    default='auto')
 @click.pass_context
-def main(ctx):
+def main(ctx, mode):
     """
     This program is a helper for dockerred Areca Backup.
 
@@ -403,6 +429,20 @@ def main(ctx):
     """
     Areca Backup won't record the empty directories and their properties
     """
+
+    ctx.obj = dict()
+
+    if mode == "auto":
+        areca_cl_path = which("areca_cl.sh")
+        ctx.obj["is_dockerized"] = (areca_cl_path is None)
+
+        if areca_cl_path is None:
+            print("Can't found areca console script, use dockerized areca ...")
+        else:
+            print("Found areca at : %s" % areca_cl_path)
+    else:
+        ctx.obj["is_dockerized"] = (mode == "docker")
+
 
 @main.command()
 @click.argument('config', type=click.File())
@@ -429,7 +469,7 @@ def backup(ctx, config):
         if (len(source) > 1) and (len(source[1].strip()) > 0):
             vars["project_name"] = source[1].strip()
 
-        ret = exec_(True, vars)
+        ret = exec_(True, ctx.obj["is_dockerized"], vars)
         if ret:
             return ret
 
@@ -479,7 +519,7 @@ def proj(ctx, config, name, to_path):
 
         vars["src_path"] = to_path
 
-        ret = exec_(False, vars)
+        ret = exec_(False, ctx.obj["is_dockerized"], vars)
         if ret:
             return ret
 
@@ -518,7 +558,9 @@ def repo(ctx, config, to_path):
         vars["src_path"] = os.path.join(
             to_path, vars["project_name"])
 
-        if exec_(False, vars):
+        vars["orig_path"] = os.path.realpath(os.path.normpath(source[0]))
+
+        if exec_(False, ctx.obj["is_dockerized"], vars):
             break
 
     return 0
