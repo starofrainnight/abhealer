@@ -6,29 +6,43 @@ Areca Backup.
 '''
 
 import pathlib
+from . import abhealer
 
 
 class Project(object):
 
-    def __init__(self, adir):
+    def __init__(self, repository, adir):
         self._base_dir = pathlib.Path(adir)
+        self._repository = repository
+
+    @property
+    def repository(self):
+        return self._repository
 
     @property
     def base_dir(self):
         return self._base_dir
 
+    @property
+    def name(self):
+        return self.base_dir.name
+
+    def __repr__(self):
+        return "<%s(\"%s\")>" % (type(self).__qualname__, self.name)
+
 
 class Repository(object):
+    CFG_DIR_NAME = "areca_config_backup"
 
     def __init__(self, adir):
         self._base_dir = pathlib.Path(adir)
 
         # Validate directory
-        self._cfg_dir = self._base_dir / "areca_config_backup"
-        if not self._cfg_dir.exist():
-            msg = ("'areca_config_backup' directory not found ! The directory "
+        self._cfg_dir = self._base_dir / self.CFG_DIR_NAME
+        if not self._cfg_dir.exists():
+            msg = ("'%s' directory not found ! The directory "
                    "is not an Areca Backup repository: %s!")
-            msg = msg % self._base_dir
+            msg = msg % (self.CFG_DIR_NAME, self._base_dir)
             raise NotADirectoryError(msg)
 
     @property
@@ -41,7 +55,21 @@ class Repository(object):
 
     @property
     def projects(self):
-        pass
+
+        all_projects = []
+        for subdir in self.base_dir.iterdir():
+            if subdir.name == self.CFG_DIR_NAME:
+                continue
+
+            history_path = subdir / "history"
+            if (not history_path.exists()) or (not history_path.is_file()):
+                abhealer.logger().warn(
+                    "Found invalid project : %s" % subdir.name)
+                continue
+
+            all_projects.append(Project(self, subdir))
+
+        return all_projects
 
 
 class ArecaBackup(object):
