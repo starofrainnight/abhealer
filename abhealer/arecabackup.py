@@ -26,8 +26,8 @@ class Repository(object):
         # Validate directory
         self._cfg_dir = self._base_dir / "areca_config_backup"
         if not self._cfg_dir.exist():
-            msg = ("The directory is not an Areca Backup repository "
-                   "directory: %s!")
+            msg = ("'areca_config_backup' directory not found ! The directory "
+                   "is not an Areca Backup repository: %s!")
             msg = msg % self._base_dir
             raise NotADirectoryError(msg)
 
