@@ -37,11 +37,27 @@ def int_to_folder(aint):
     return str(first_part) + second_part_text
 
 
+class TraceInfo(object):
+
+    def __init__(self, info):
+        pass
+
+
 class DataInfo(object):
     DIR_SUFFIX = "_data"
 
     def __init__(self, adir):
         self._base_dir = adir
+
+    def _extract_data(self, name):
+        info_zip_path = self.base_dir / name
+        with zipfile.ZipFile(str(info_zip_path)) as info_zip_file:
+            data_file = io.BytesIO(info_zip_file.read(name))
+
+        with gzip.GzipFile(fileobj=data_file) as data_zip_file:
+            data = data_zip_file.read().decode()
+
+        return data
 
     @property
     def base_dir(self):
@@ -64,12 +80,7 @@ class DataInfo(object):
     def traces(self):
         infos = dict()
 
-        info_zip_path = self.base_dir / "trace"
-        with zipfile.ZipFile(str(info_zip_path)) as info_zip_file:
-            trace_file = io.BytesIO(info_zip_file.read("trace"))
-
-        with gzip.GzipFile(fileobj=trace_file) as trace_zip_file:
-            trace_info = trace_zip_file.read().decode()
+        trace_info = self._extract_data("trace")
 
         # Parse trace info
         lines = trace_info.splitlines()
