@@ -11,29 +11,33 @@ import pathlib
 class Project(object):
 
     def __init__(self, adir):
-        self._dir = pathlib.Path(adir)
+        self._base_dir = pathlib.Path(adir)
 
     @property
-    def dir_(self):
-        return self._dir
+    def base_dir(self):
+        return self._base_dir
 
 
 class Repository(object):
 
     def __init__(self, adir):
-        self._dir = pathlib.Path(adir)
+        self._base_dir = pathlib.Path(adir)
 
         # Validate directory
-        cfg_backup_dir = self.dir_ / "areca_config_backup"
-        if not cfg_backup_dir.exist():
+        self._cfg_dir = self._base_dir / "areca_config_backup"
+        if not self._cfg_dir.exist():
             msg = ("The directory is not an Areca Backup repository "
                    "directory: %s!")
-            msg = msg % self.dir_
+            msg = msg % self._base_dir
             raise NotADirectoryError(msg)
 
     @property
-    def dir_(self):
-        return self._dir
+    def base_dir(self):
+        return self._base_dir
+
+    @property
+    def projects(self):
+        pass
 
 
 class ArecaBackup(object):
