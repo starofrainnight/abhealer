@@ -59,10 +59,10 @@ def int_to_folder(aint):
     return str(first_part) + second_part_text
 
 
-def find_data_dirs(dest_dir):
+def find_data_dirs(proj_dir):
     data_dirs = []
-    dest_dir = os.path.realpath(str(dest_dir))
-    for afolder in os.listdir(dest_dir):
+    proj_dir = os.path.realpath(str(proj_dir))
+    for afolder in os.listdir(proj_dir):
         if afolder.endswith("_data"):
             continue
 
@@ -77,11 +77,11 @@ def find_data_dirs(dest_dir):
     return data_dirs
 
 
-def find_latest_dir(dest_dir):
+def find_latest_dir(proj_dir):
     # Find the latest dir
     max_value = 0
-    dest_dir = os.path.realpath(str(dest_dir))
-    for afolder in os.listdir(dest_dir):
+    proj_dir = os.path.realpath(str(proj_dir))
+    for afolder in os.listdir(proj_dir):
         if afolder.endswith("_data"):
             continue
 
@@ -98,12 +98,12 @@ def find_latest_dir(dest_dir):
     return int_to_folder(max_value)
 
 
-def get_trace_infos(dest_dir):
-    data_dirs = find_data_dirs(dest_dir)
+def get_trace_infos(proj_dir):
+    data_dirs = find_data_dirs(proj_dir)
 
     trace_infos = dict()
     for adir in data_dirs:
-        info_zip_path = os.path.join(str(dest_dir), adir, "trace")
+        info_zip_path = os.path.join(str(proj_dir), adir, "trace")
         with zipfile.ZipFile(info_zip_path) as info_zip_file:
             trace_file = io.BytesIO(info_zip_file.read("trace"))
 
