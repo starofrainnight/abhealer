@@ -40,7 +40,50 @@ def int_to_folder(aint):
 class TraceInfo(object):
 
     def __init__(self, info):
-        pass
+        self._parties = info.split(';')
+
+        atype = self.type_
+
+        if atype == "f":
+            mode_index = 4
+            owner_index = 5
+            group_index = 6
+        elif atype == "d":
+            mode_index = 2
+            owner_index = 3
+            group_index = 4
+        elif atype == "s":
+            mode_index = 3
+            owner_index = 4
+            group_index = 5
+
+        self._mode = self._parties[mode_index]
+        self._owner = self._parties[owner_index]
+        self._group = self._parties[group_index]
+
+    @property
+    def type_(self):
+        return self._parties[0][0]
+
+    @property
+    def path(self):
+        return self._parties[0][1:]
+
+    @property
+    def mode(self):
+        return self._mode
+
+    @property
+    def owner(self):
+        return self._owner
+
+    @property
+    def group(self):
+        return self._group
+
+    def __repr__(self):
+        return "%s(\"%s\", \"%s\")" % (
+            type(self).__qualname__, self.type_, self.path)
 
 
 class DataInfo(object):
@@ -78,12 +121,12 @@ class DataInfo(object):
 
     @property
     def traces(self):
-        infos = dict()
+        infos = list()
 
-        trace_info = self._extract_data("trace")
+        data = self._extract_data("trace")
 
         # Parse trace info
-        lines = trace_info.splitlines()
+        lines = data.splitlines()
         for aline in lines:
             aline = aline.strip()
             if not aline:
@@ -92,8 +135,8 @@ class DataInfo(object):
             if aline.startswith('#'):
                 continue
 
-            parties = aline.split(';')
-            infos[parties[0]] = parties
+            info = TraceInfo(aline)
+            infos.append(info)
 
         return infos
 
