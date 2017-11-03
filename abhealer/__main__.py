@@ -208,7 +208,7 @@ def clear_dirs(dest_dir):
 def exec_(is_backup, is_dockerized, vars):
     vars = copy.deepcopy(vars)
 
-    temp_dir = tempfile.TemporaryDirectory(prefix="dockerred_areca")
+    temp_dir = tempfile.TemporaryDirectory(prefix="abhealer")
 
     template = get_project_template()
 
