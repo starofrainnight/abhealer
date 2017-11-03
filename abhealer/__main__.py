@@ -437,9 +437,10 @@ def main(ctx, mode):
         ctx.obj["is_dockerized"] = (areca_cl_path is None)
 
         if areca_cl_path is None:
-            print("Can't found areca console script, use dockerized areca ...")
+            click.echo(
+                "Can't found areca console script, use dockerized areca ...")
         else:
-            print("Found areca at : %s" % areca_cl_path)
+            click.echo("Found areca at : %s" % areca_cl_path)
     else:
         ctx.obj["is_dockerized"] = (mode == "docker")
 
