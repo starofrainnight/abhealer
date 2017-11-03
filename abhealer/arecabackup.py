@@ -33,6 +33,7 @@ def int_to_folder(aint):
 
 
 class DataInfo(object):
+    DIR_SUFFIX = "_data"
 
     def __init__(self, adir):
         self._base_dir = adir
@@ -41,11 +42,16 @@ class DataInfo(object):
     def base_dir(self):
         return self._base_dir
 
+    def _name_without_suffix(self):
+        return self.base_dir.name[:-len(self.DIR_SUFFIX)]
+
     def __repr__(self):
-        data_dir_suffix = "_data"
         return "%s(\"%s\")" % (
             type(self).__qualname__,
-            self.base_dir.name[:-len(data_dir_suffix)])
+            self._name_without_suffix())
+
+    def __int__(self):
+        return folder_to_int(self._name_without_suffix())
 
 
 class Project(object):
@@ -70,17 +76,13 @@ class Project(object):
     @property
     def data_infos(self):
         infos = []
-        data_dir_suffix = "_data"
         for subdir in self.base_dir.iterdir():
-            if not subdir.name.endswith(data_dir_suffix):
+            if not subdir.name.endswith(DataInfo.DIR_SUFFIX):
                 continue
 
             infos.append(DataInfo(subdir))
 
-        infos = sorted(
-            infos,
-            key=lambda x: folder_to_int(
-                x.base_dir.name[:-len(data_dir_suffix)]))
+        infos = sorted(infos, key=lambda x: int(x))
 
         return infos
 
