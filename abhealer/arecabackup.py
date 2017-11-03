@@ -97,6 +97,45 @@ class DataInfo(object):
 
         return infos
 
+    @property
+    def manifest(self):
+        """
+        Get manifest of this backup data info.
+
+        Return a root element of ElementTree about the xml content.
+
+        Sample manifest content:
+
+        <?xml version="1.0" encoding="UTF-8"?>
+        <manifest version="1" type="0" date="2017_11_03 20h56-38-284">
+        <properties>
+        <property key="Archive name" value="201711032056" />
+        <property key="Archive size" value="256" />
+        <property key="Areca Home" value="/home/useradmin/applications/areca/bin" />
+        <property key="Backup duration" value="273 ms" />
+        <property key="Build id" value="5872222636083894532" />
+        <property key="Checked" value="false" />
+        <property key="File encoding" value="UTF-8" />
+        <property key="Filtered entries" value="0" />
+        <property key="JRE" value="/usr/lib/jvm/java-8-openjdk-amd64/jre" />
+        <property key="Operating system" value="Linux - 4.4.0-34-generic" />
+        <property key="Option [backup scheme]" value="Incremental backup" />
+        <property key="Scanned entries (files or directories)" value="2" />
+        <property key="Source path" value="/mnt/data/sources/projects/abhealer/from" />
+        <property key="Stored files" value="1" />
+        <property key="Target ID" value="from" />
+        <property key="Unfiltered directories" value="1" />
+        <property key="Unfiltered files" value="1" />
+        <property key="Unmodified files (not stored)" value="0" />
+        <property key="Version" value="7.5" />
+        <property key="Version date" value="August 26, 2015" />
+        </properties>
+        </manifest>
+        """
+
+        data = self._extract_data("manifest")
+        return etree.fromstring(data)
+
     def _name_without_suffix(self):
         return self.base_dir.name[:-len(self.DIR_SUFFIX)]
 
