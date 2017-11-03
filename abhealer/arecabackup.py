@@ -57,7 +57,7 @@ class TraceInfo(object):
             owner_index = 4
             group_index = 5
 
-        self._mode = self._parties[mode_index]
+        self._mode = int(self._parties[mode_index])
         self._owner = self._parties[owner_index]
         self._group = self._parties[group_index]
 
