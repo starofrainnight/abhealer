@@ -6,14 +6,16 @@ Areca Backup.
 '''
 
 import pathlib
+import xml.etree.ElementTree as etree
 from . import abhealer
 
 
 class Project(object):
 
-    def __init__(self, repository, adir):
+    def __init__(self, repository, cfg, adir):
         self._base_dir = pathlib.Path(adir)
         self._repository = repository
+        self._cfg = cfg
 
     @property
     def repository(self):
@@ -67,7 +69,9 @@ class Repository(object):
                     "Found invalid project : %s" % subdir.name)
                 continue
 
-            all_projects.append(Project(self, subdir))
+            project_cfg_path = self.cfg_dir / (subdir.name + ".bcfg")
+            all_projects.append(Project(
+                self, etree.parse(str(project_cfg_path)), subdir))
 
         return all_projects
 
