@@ -80,27 +80,6 @@ def find_data_dirs(proj_dir):
     return data_dirs
 
 
-def find_latest_dir(proj_dir):
-    # Find the latest dir
-    max_value = 0
-    proj_dir = os.path.realpath(str(proj_dir))
-    for afolder in os.listdir(proj_dir):
-        if afolder.endswith("_data"):
-            continue
-
-        if afolder.lower() == "history":
-            continue
-
-        value = folder_to_int(afolder)
-        if value > max_value:
-            max_value = value
-
-    if max_value <= 0:
-        return
-
-    return int_to_folder(max_value)
-
-
 def get_trace_infos(proj_dir):
     data_dirs = find_data_dirs(proj_dir)
 
