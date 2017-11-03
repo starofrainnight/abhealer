@@ -46,9 +46,7 @@ class DataInfo(object):
         return self.base_dir.name[:-len(self.DIR_SUFFIX)]
 
     def __repr__(self):
-        return "%s(\"%s\")" % (
-            type(self).__qualname__,
-            self._name_without_suffix())
+        return "%s(%s)" % (type(self).__qualname__, int(self))
 
     def __int__(self):
         return folder_to_int(self._name_without_suffix())
