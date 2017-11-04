@@ -12,6 +12,7 @@ import gzip
 import io
 import os.path
 import xml.etree.ElementTree as etree
+from whichcraft import which
 from . import abhealer
 
 
@@ -274,4 +275,26 @@ class ArecaBackup(object):
     '''
 
     def __init__(self):
-        pass
+        # Search areca backup script in PATH
+        self._program_path = self._detect_program_path()
+
+    def _detect_program_path(self):
+        apath = which("areca_cl.sh")
+        if apath is None:
+            return None
+
+        return pathlib.Path(apath)
+
+    def gen_backup_cmd(self, cfg_path, workspack_dir):
+        cmd = "cd %s; ./areca_cl.sh backup -config %s -wdir %s"
+        cmd = cmd % (self._program_path.parent,
+                     str(cfg_path), str(workspack_dir))
+
+        return cmd
+
+    def gen_recover_cmd(self, cfg_path, dst_dir):
+        cmd = ("cd %s; ./areca_cl.sh recover -config %s -destination %s "
+               "-o -nosubdir")
+        cmd = cmd % (self._program_path.parent,
+                     str(cfg_path), str(dst_dir))
+        return cmd
