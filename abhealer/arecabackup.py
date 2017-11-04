@@ -250,7 +250,7 @@ class Repository(object):
     @property
     def projects(self):
 
-        all_projects = []
+        all = []
         for subdir in self.base_dir.iterdir():
             if subdir.name == self.CFG_DIR_NAME:
                 continue
@@ -261,11 +261,11 @@ class Repository(object):
                     "Found invalid project : %s" % subdir.name)
                 continue
 
-            project_cfg_path = self.cfg_dir / (subdir.name + ".bcfg")
-            all_projects.append(Project(
-                self, etree.parse(str(project_cfg_path)), subdir))
+            cfg_path = self.cfg_dir / (subdir.name + ".bcfg")
+            all.append(Project(
+                self, etree.parse(str(cfg_path)), subdir))
 
-        return all_projects
+        return all
 
 
 class ArecaBackup(object):
