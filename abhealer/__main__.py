@@ -24,6 +24,12 @@ from .pathutils import get_path_owner, get_path_group, chown, normal_path, \
 from whichcraft import which
 
 
+class UserData(object):
+
+    def __init__(self):
+        pass
+
+
 # WARNING! When using zip compress (file_compression=True), we got this error
 # when checking:
 #
@@ -351,11 +357,11 @@ def main(ctx, mode):
     Areca Backup won't record the empty directories and their properties
     """
 
-    ctx.obj = dict()
+    ctx.obj = UserData()
 
     if mode == "auto":
         areca_cl_path = which("areca_cl.sh")
-        ctx.obj["is_dockerized"] = (areca_cl_path is None)
+        ctx.obj.is_dockerized = (areca_cl_path is None)
 
         if areca_cl_path is None:
             click.echo(
@@ -363,7 +369,7 @@ def main(ctx, mode):
         else:
             click.echo("Found areca at : %s" % areca_cl_path)
     else:
-        ctx.obj["is_dockerized"] = (mode == "docker")
+        ctx.obj.is_dockerized = (mode == "docker")
 
 
 @main.command()
@@ -391,7 +397,7 @@ def backup(ctx, config):
         if (len(source) > 1) and (len(source[1].strip()) > 0):
             vars["project_name"] = source[1].strip()
 
-        ret = exec_(True, ctx.obj["is_dockerized"], vars)
+        ret = exec_(True, ctx.obj.is_dockerized, vars)
         if ret:
             return ret
 
@@ -441,7 +447,7 @@ def proj(ctx, config, name, to_path):
 
         vars["src_path"] = to_path
 
-        ret = exec_(False, ctx.obj["is_dockerized"], vars)
+        ret = exec_(False, ctx.obj.is_dockerized, vars)
         if ret:
             return ret
 
@@ -482,7 +488,7 @@ def repo(ctx, config, to_path):
 
         vars["orig_path"] = os.path.realpath(os.path.normpath(source[0]))
 
-        if exec_(False, ctx.obj["is_dockerized"], vars):
+        if exec_(False, ctx.obj.is_dockerized, vars):
             break
 
     return 0
