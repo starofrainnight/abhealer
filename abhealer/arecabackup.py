@@ -287,6 +287,14 @@ class LocalArecaBackup(object):
 
         return pathlib.Path(apath)
 
+    def backup(self, cfg_path, ws_dir):
+        return subprocess.call(
+            self.gen_backup_cmd(cfg_path, ws_dir), shell=True)
+
+    def recover(self, cfg_path, dst_dir):
+        return subprocess.call(
+            self.gen_recover_cmd(cfg_path, dst_dir), shell=True)
+
     def gen_backup_cmd(self, cfg_path, ws_dir):
         cmd = "cd %s; ./areca_cl.sh backup -config %s -wdir %s"
         cmd = cmd % (self._program_path.parent,
