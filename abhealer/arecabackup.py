@@ -287,10 +287,10 @@ class LocalArecaBackup(object):
 
         return pathlib.Path(apath)
 
-    def gen_backup_cmd(self, cfg_path, workspace_dir):
+    def gen_backup_cmd(self, cfg_path, ws_dir):
         cmd = "cd %s; ./areca_cl.sh backup -config %s -wdir %s"
         cmd = cmd % (self._program_path.parent,
-                     str(cfg_path), str(workspace_dir))
+                     str(cfg_path), str(ws_dir))
 
         return cmd
 
