@@ -10,7 +10,9 @@ import arrow
 import zipfile
 import gzip
 import io
+import os
 import os.path
+import subprocess
 import xml.etree.ElementTree as etree
 from whichcraft import which
 from . import abhealer
@@ -298,3 +300,21 @@ class ArecaBackup(object):
         cmd = cmd % (self._program_path.parent,
                      str(cfg_path), str(dst_dir))
         return cmd
+
+
+class DockerizedArecaBackup(ArecaBackup):
+    '''
+    The class use for maintain Dockerized Areca Backup's behaviors.
+    '''
+    CMD_PREFIX = "docker run -t --rm starofrainnight/areca-backup "
+
+    def __init__(self):
+        super().__init__()
+
+    def _detect_program_path(self):
+        cmd = "%s bash --version" % self.CMD_PREFIX
+        ret = subprocess.call(cmd, shell=True)
+        if ret:
+            return None
+
+        return pathlib.Path("/usr/local/bin/areca_cl.sh")
