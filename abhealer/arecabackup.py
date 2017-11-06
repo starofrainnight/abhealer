@@ -287,10 +287,10 @@ class LocalArecaBackup(object):
 
         return pathlib.Path(apath)
 
-    def gen_backup_cmd(self, cfg_path, workspack_dir):
+    def gen_backup_cmd(self, cfg_path, workspace_dir):
         cmd = "cd %s; ./areca_cl.sh backup -config %s -wdir %s"
         cmd = cmd % (self._program_path.parent,
-                     str(cfg_path), str(workspack_dir))
+                     str(cfg_path), str(workspace_dir))
 
         return cmd
 
@@ -306,6 +306,7 @@ class DockerizedArecaBackup(LocalArecaBackup):
     '''
     The class use for maintain Dockerized Areca Backup's behaviors.
     '''
+
     CMD_PREFIX = "docker run -t --rm starofrainnight/areca-backup "
 
     def __init__(self):
