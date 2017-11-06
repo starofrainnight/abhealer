@@ -32,10 +32,12 @@ def chown(apath, uid, gid):
 
 
 def normal_path(apath):
+    apath = os.path.abspath(str(apath))
     if sys.platform == 'win32':
-        return os.path.abspath(apath).replace("/", "\\")
+        apath = apath.replace("/", "\\")
     else:
-        return os.path.abspath(apath).replace("\\", "/")
+        apath = apath.replace("\\", "/")
+    return pathlib.Path(apath)
 
 
 def compute_related_path(link, target):
