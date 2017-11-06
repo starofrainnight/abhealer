@@ -271,7 +271,7 @@ class Repository(object):
         return all
 
 
-class ArecaBackup(object):
+class LocalArecaBackup(object):
     '''
     The class use for maintain Areca Backup's behaviors.
     '''
@@ -302,7 +302,7 @@ class ArecaBackup(object):
         return cmd
 
 
-class DockerizedArecaBackup(ArecaBackup):
+class DockerizedArecaBackup(LocalArecaBackup):
     '''
     The class use for maintain Dockerized Areca Backup's behaviors.
     '''
