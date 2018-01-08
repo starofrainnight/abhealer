@@ -11,6 +11,7 @@ requirements = [
     'jinja2',
     'pyyaml',
     'arrow',
+    'whichcraft',
 ]
 
 test_requirements = [
