@@ -15,7 +15,8 @@ import os.path
 import subprocess
 import xml.etree.ElementTree as etree
 from whichcraft import which
-from . import abhealer
+from pathlib import Path
+from . import abhealer, pathutils
 
 
 def folder_to_int(name):
@@ -195,7 +196,7 @@ class DataInfo(object):
 class Project(object):
 
     def __init__(self, repository, cfg, adir):
-        self._base_dir = pathlib.Path(adir)
+        self._base_dir = Path(adir)
         self._repository = repository
         self._cfg = cfg
 
@@ -232,7 +233,7 @@ class Repository(object):
     CFG_DIR_NAME = "areca_config_backup"
 
     def __init__(self, adir):
-        self._base_dir = pathlib.Path(adir)
+        self._base_dir = Path(adir)
 
         # Validate directory
         self._cfg_dir = self._base_dir / self.CFG_DIR_NAME
@@ -285,7 +286,7 @@ class LocalArecaBackup(object):
         if apath is None:
             return None
 
-        return pathlib.Path(apath)
+        return Path(apath)
 
     def backup(self, cfg_path, ws_dir):
         return subprocess.call(
@@ -295,18 +296,35 @@ class LocalArecaBackup(object):
         return subprocess.call(
             self.gen_recover_cmd(cfg_path, dst_dir), shell=True)
 
-    def gen_backup_cmd(self, cfg_path, ws_dir):
+    def gen_backup_cmd(self, cfg_path, ws_dir=None):
+        """
+        Generate backup command
+
+        :param ws_dir: Working directory during archive check. Default to None
+        for use cfg_path's path
+        """
+        cfg_path = pathutils.normal_path(cfg_path)
+
+        if ws_dir:
+            ws_dir = pathutils.normal_path(ws_dir)
+        else:
+            ws_dir = pathutils.normal_path(cfg_path).parent
+
         cmd = "cd %s; ./areca_cl.sh backup -config %s -wdir %s"
         cmd = cmd % (self._program_path.parent,
                      str(cfg_path), str(ws_dir))
-
         return cmd
 
     def gen_recover_cmd(self, cfg_path, dst_dir):
+
+        cfg_path = pathutils.normal_path(cfg_path)
+        dst_dir = pathutils.normal_path(dst_dir)
+
         cmd = ("cd %s; ./areca_cl.sh recover -config %s -destination %s "
                "-o -nosubdir")
         cmd = cmd % (self._program_path.parent,
                      str(cfg_path), str(dst_dir))
+
         return cmd
 
 
@@ -316,6 +334,10 @@ class DockerizedArecaBackup(LocalArecaBackup):
     '''
 
     CMD_PREFIX = "docker run -t --rm starofrainnight/areca-backup "
+    SRC_DIR = "/opt/source"
+    DST_DIR = "/opt/backup"
+    WS_DIR = "/opt/workspace"
+    CFG_DIR = "/opt/config"
 
     def __init__(self):
         super().__init__()
@@ -326,4 +348,30 @@ class DockerizedArecaBackup(LocalArecaBackup):
         if ret:
             return None
 
-        return pathlib.Path("/usr/local/bin/areca_cl.sh")
+        return Path("/usr/local/bin/areca_cl.sh")
+
+    def gen_docker_volume_options(self, cfg_path, dst_dir):
+        pass
+
+    def gen_backup_cmd(self, cfg_path, ws_dir=None):
+        cfg_path = pathutils.normal_path(cfg_path)
+        client_cfg_path = os.path.join(self.CFG_DIR, cfg_path.name)
+
+        if ws_dir:
+            ws_dir = pathutils.normal_path(ws_dir)
+        else:
+            ws_dir = pathutils.normal_path(cfg_path).parent
+
+        cmd = super().gen_backup_cmd(client_cfg_path, self.WS_DIR)
+
+        return cmd
+
+    def gen_recover_cmd(self, cfg_path, dst_dir):
+        cfg_path = pathutils.normal_path(cfg_path)
+        client_cfg_path = os.path.join(self.CFG_DIR, cfg_path.name)
+
+        dst_dir = pathutils.normal_path(dst_dir)
+
+        cmd = super().gen_recover_cmd(client_cfg_path, self.DST_DIR)
+
+        return cmd
