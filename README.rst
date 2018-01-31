@@ -18,8 +18,7 @@ abhealer
      :alt: Updates
 
 
-abhealer
-
+An Areca Backup helper program.
 
 * Free software: Apache License 2.0
 * Documentation: https://abhealer.readthedocs.io.
