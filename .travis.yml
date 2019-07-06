@@ -1,17 +1,37 @@
 language: python
-python: 3.5
-env:
-- TOXENV=py35
-- TOXENV=py34
-install: pip install -U tox
-script: tox -e ${TOXENV}
-deploy:
-  provider: pypi
-  distributions: sdist bdist_wheel
-  user: starofrainnight
-  password:
-    secure: Znlfe2OsEkc5TjiQ2m8cMLYL/z58kgVw6f58Z9OHDd7O2ABPzwDNxQRN0IcRcV823ks+zFAlnLkqGf/gL5svzIbjmL7+ibfCc85yTcXvNZnrrJjQ1ISYeA4ga/+Pkjy1LWx97UoYFk0MGZTdoj0f+waf3U3pZMUCDAnnYsWWQPUpmEF12ynhfFq2JhrU+1B7+2iYDI7hNCv75TdzblJ8cw6drllv8S97zYVPMWBeaIzsB5XMWt4J+j3z+IZRIGhx8zgnNr8PRh3ufWp5VjG5HsY6TK4xASqAgbIj4tTTl6Gklo+f7tfVgyrar4w0Z1xJECEOgxfT7oN2AE+1GRFQvJbm1tjU+SkXezAdJEyvmrDHbZCJk/M/SditELaLSfNfC+fAiWpg/zOxSi46oSDU2nFZVShwkv8flGMvueoByVw4A1+0KOK/ZHplc6yISdf7IKrjkXpIs1bm+VsoxFjhRFLdcHeMBeFrOcBIh2g7ruXVVPGxidMRaLzmthiTlyMc04jQjkQ7GkJYbW7xqsKiZ1oXuEIOfymCkYLizg8Ju6c6vaXYwDiHQBQ1Nk0FXKBqOgyzuAa/KGfYAc1qzZYsRQB63c04+msqChK3gGzxZBBonCtguCxQ99pZGlh4CX2W9KBtJCD3m2MUoti9j+rWiWi4wWJYjxXGRKTA3DSLGhY=
-  on:
-    tags: true
-    repo: starofrainnight/abhealer
-    condition: "$TOXENV == py34"
+
+matrix:
+  include:
+    # - python: 2.7
+    - python: 3.5
+    - python: 3.6
+    - python: 3.7
+      dist: xenial
+      sudo: true
+
+# command to install dependencies, e.g. pip install -r requirements.txt --use-mirrors
+install:
+  - python -m pip install -U pip
+  - python -m pip install -U setuptools
+  # Prepare test utility
+  - python -m pip install click
+
+# command to run tests, e.g. python setup.py test
+script:
+  - |
+    # Only run mypy and flake8 check with python 3.7
+    if [ "${TRAVIS_PYTHON_VERSION}" == "3.7" ] ; then
+      python ./ci/executor.py test -e mypy -e flake8
+    fi
+  - python ./ci/executor.py test
+
+# After you create the Github repo and add it to Travis, predefine
+# TWINE_USERNAME and TWINE_PASSWORD environment variables in your travis-ci
+# project settings, so that twine will access them without place the private
+# account informations in this travis configuration file.
+after_success:
+  - |
+    # Only deploy on python 3.7 and tag version
+    if [ -n "${TRAVIS_TAG}" ] && [ "${TRAVIS_PYTHON_VERSION}" == "3.7" ] ; then
+      python ./ci/executor.py deploy
+    fi

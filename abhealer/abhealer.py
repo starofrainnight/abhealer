@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 
+"""Main module."""
+
 import logging
 
 _logger = None

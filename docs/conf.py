@@ -56,7 +56,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'abhealer'
-copyright = u"2017, Hong-She Liang"
+copyright = u"2017-2019, Hong-She Liang"
 
 # The version info for the project you're documenting, acts as replacement
 # for |version| and |release|, also used in various other places throughout

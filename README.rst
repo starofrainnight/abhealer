@@ -4,23 +4,18 @@ abhealer
 
 
 .. image:: https://img.shields.io/pypi/v/abhealer.svg
-        :target: https://pypi.python.org/pypi/abhealer
+    :target: https://pypi.python.org/pypi/abhealer
 
-.. image:: https://img.shields.io/travis/starofrainnight/abhealer.svg
-        :target: https://travis-ci.org/starofrainnight/abhealer
+.. image:: https://travis-ci.org/starofrainnight/abhealer.svg?branch=master
+    :target: https://travis-ci.org/starofrainnight/abhealer
 
-.. image:: https://readthedocs.org/projects/abhealer/badge/?version=latest
-        :target: https://abhealer.readthedocs.io/en/latest/?badge=latest
-        :alt: Documentation Status
+.. image:: https://ci.appveyor.com/api/projects/status/github/starofrainnight/abhealer?svg=true
+    :target: https://ci.appveyor.com/project/starofrainnight/abhealer
 
-.. image:: https://pyup.io/repos/github/starofrainnight/abhealer/shield.svg
-     :target: https://pyup.io/repos/github/starofrainnight/abhealer/
-     :alt: Updates
+An Areca Backup helper program
 
 
-An Areca Backup helper program.
-
-* Free software: Apache License 2.0
+* License: Apache-2.0
 * Documentation: https://abhealer.readthedocs.io.
 
 

@@ -1,12 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""
-test_abhealer
-----------------------------------
-
-Tests for `abhealer` module.
-"""
+"""Tests for `abhealer` package."""
 
 import pytest
 
