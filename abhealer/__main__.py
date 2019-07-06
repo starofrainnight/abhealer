@@ -446,6 +446,7 @@ def proj(ctx, config, name, to_path):
             continue
 
         vars["src_path"] = to_path
+        vars["orig_path"] = os.path.realpath(os.path.normpath(source[0]))
 
         ret = exec_(False, ctx.obj.is_dockerized, vars)
         if ret:
