@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import sys
 import os.path
 import click
 import six
@@ -14,8 +15,6 @@ import yaml
 import zipfile
 import gzip
 import stat
-import pwd
-import grp
 import copy
 from .pathutils import (
     get_path_owner,
@@ -171,11 +170,15 @@ def recover_dirs(is_dockerized, orig_dir, source_dir, dest_dir):
         if (get_path_owner(source_path) != v[owner_index]) or (
             get_path_group(source_path) != v[group_index]
         ):
-            chown(
-                str(source_path),
-                pwd.getpwnam(v[owner_index]).pw_uid,
-                grp.getgrnam(v[group_index]).gr_gid,
-            )
+            if sys.platform != "win32":
+                import pwd
+                import grp
+
+                chown(
+                    str(source_path),
+                    pwd.getpwnam(v[owner_index]).pw_uid,
+                    grp.getgrnam(v[group_index]).gr_gid,
+                )
 
     print("Recover directories permissions completed!")
 
