@@ -32,5 +32,5 @@ def test_command_line_interface():
     runner = CliRunner()
     result = runner.invoke(main)
     assert result.exit_code == 0
-    help_result = runner.invoke(main, ['--help'])
+    help_result = runner.invoke(main, ["--help"])
     assert help_result.exit_code == 0

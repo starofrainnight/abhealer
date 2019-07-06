@@ -19,13 +19,17 @@ import pwd
 import grp
 import copy
 from . import arecabackup
-from .pathutils import get_path_owner, get_path_group, chown, normal_path, \
-    compute_related_path
+from .pathutils import (
+    get_path_owner,
+    get_path_group,
+    chown,
+    normal_path,
+    compute_related_path,
+)
 from whichcraft import which
 
 
 class UserData(object):
-
     def __init__(self):
         pass
 
@@ -36,10 +40,11 @@ class UserData(object):
 # java.lang.IllegalArgumentException: Cannot open an OutputStream in 'append'
 # mode on a compressed FileSystem.
 
+
 def get_project_template():
     from jinja2 import Environment, PackageLoader
 
-    loader = PackageLoader('abhealer', 'templates')
+    loader = PackageLoader("abhealer", "templates")
 
     env = Environment(loader=loader)
 
@@ -105,10 +110,10 @@ def get_trace_infos(proj_dir):
             if not aline:
                 continue
 
-            if aline.startswith('#'):
+            if aline.startswith("#"):
                 continue
 
-            infos = aline.split(';')
+            infos = aline.split(";")
             trace_infos[infos[0]] = infos
 
     return trace_infos
@@ -159,18 +164,21 @@ def recover_dirs(is_dockerized, orig_dir, source_dir, dest_dir):
             if client_link_path.startswith(client_source_dir):
                 source_path.unlink()
                 target = compute_related_path(
-                    client_source_path, client_link_path)
+                    client_source_path, client_link_path
+                )
                 source_path.symlink_to(target)
             else:
                 source_path.unlink()
                 source_path.symlink_to(client_link_path)
 
-        if ((get_path_owner(source_path) != v[owner_index])
-                or (get_path_group(source_path) != v[group_index])):
+        if (get_path_owner(source_path) != v[owner_index]) or (
+            get_path_group(source_path) != v[group_index]
+        ):
             chown(
                 str(source_path),
                 pwd.getpwnam(v[owner_index]).pw_uid,
-                grp.getgrnam(v[group_index]).gr_gid)
+                grp.getgrnam(v[group_index]).gr_gid,
+            )
 
     print("Recover directories permissions completed!")
 
@@ -233,8 +241,7 @@ def exec_(is_backup, is_dockerized, vars):
             os.makedirs(source_dir, exist_ok=True)
 
         if os.listdir(source_dir):
-            raise click.UsageError(
-                "Destination must be empty directory!")
+            raise click.UsageError("Destination must be empty directory!")
 
     if is_dockerized:
         source_client_dir = "/opt/source"
@@ -247,9 +254,11 @@ def exec_(is_backup, is_dockerized, vars):
 
     fixed_config_file_name = vars["project_name"] + ".bcfg"
     fixed_config_file_path = os.path.join(
-        temp_dir.name, fixed_config_file_name)
+        temp_dir.name, fixed_config_file_name
+    )
     fixed_config_file_client_path = os.path.join(
-        workspace_client_dir, fixed_config_file_name)
+        workspace_client_dir, fixed_config_file_name
+    )
 
     # Change paths
     vars["src_path"] = source_client_dir
@@ -263,12 +272,15 @@ def exec_(is_backup, is_dockerized, vars):
 
     backup_script_file_name = "_backup.sh"
     backup_script_file_path = os.path.join(
-        temp_dir.name, backup_script_file_name)
+        temp_dir.name, backup_script_file_name
+    )
 
     config_file_client_path = os.path.join(
-        workspace_client_dir, fixed_config_file_name)
+        workspace_client_dir, fixed_config_file_name
+    )
     backup_script_file_client_path = os.path.join(
-        workspace_client_dir, backup_script_file_name)
+        workspace_client_dir, backup_script_file_name
+    )
 
     with temp_dir:
         if is_dockerized:
@@ -281,12 +293,16 @@ def exec_(is_backup, is_dockerized, vars):
             f.write("#!/bin/sh\n")
             f.write("cd %s\n" % areca_cl_script_dir)
             if is_backup:
-                f.write("./areca_cl.sh backup -config %s -wdir %s\n" % (
-                    config_file_client_path, workspace_client_dir))
+                f.write(
+                    "./areca_cl.sh backup -config %s -wdir %s\n"
+                    % (config_file_client_path, workspace_client_dir)
+                )
             else:
-                f.write("./areca_cl.sh recover "
-                        "-config %s -destination %s -o -nosubdir\n" % (
-                            config_file_client_path, source_client_dir))
+                f.write(
+                    "./areca_cl.sh recover "
+                    "-config %s -destination %s -o -nosubdir\n"
+                    % (config_file_client_path, source_client_dir)
+                )
             f.write("\n")
         os.system("chmod +x %s" % backup_script_file_path)
 
@@ -312,14 +328,23 @@ def exec_(is_backup, is_dockerized, vars):
             volume_options += " -v /etc/passwd:/etc/passwd "
             volume_options += " -v /etc/group:/etc/group "
             volume_options += " -v %s:%s " % (
-                os.path.abspath(temp_dir.name), workspace_client_dir)
+                os.path.abspath(temp_dir.name),
+                workspace_client_dir,
+            )
             volume_options += " -v %s:%s " % (
-                os.path.abspath(source_dir), source_client_dir)
+                os.path.abspath(source_dir),
+                source_client_dir,
+            )
             volume_options += " -v %s:%s " % (
-                dest_dir.resolve(), dest_client_dir)
+                dest_dir.resolve(),
+                dest_client_dir,
+            )
 
             backup_cmd = "docker run -t --rm %s %s %s" % (
-                volume_options, docker_image, run_client_cmd)
+                volume_options,
+                docker_image,
+                run_client_cmd,
+            )
         else:
             backup_cmd = run_client_cmd
 
@@ -331,7 +356,8 @@ def exec_(is_backup, is_dockerized, vars):
 
         if not is_backup:
             recover_dirs(
-                is_dockerized, vars["orig_path"], source_dir, dest_dir)
+                is_dockerized, vars["orig_path"], source_dir, dest_dir
+            )
 
         # Don't remove empty dirs, they are valid either !
         clear_dirs(dest_dir)
@@ -341,11 +367,13 @@ def exec_(is_backup, is_dockerized, vars):
 
 @click.group()
 @click.option(
-    '-m', '--mode',
-    type=click.Choice(['auto', 'local', 'docker']),
-    help='''How we search areca_cl.sh, if mode=auto we will search in path and \
-use docker version if mode=docker.''',
-    default='auto')
+    "-m",
+    "--mode",
+    type=click.Choice(["auto", "local", "docker"]),
+    help="""How we search areca_cl.sh, if mode=auto we will search in path and \
+use docker version if mode=docker.""",
+    default="auto",
+)
 @click.pass_context
 def main(ctx, mode):
     """
@@ -361,19 +389,20 @@ def main(ctx, mode):
 
     if mode == "auto":
         areca_cl_path = which("areca_cl.sh")
-        ctx.obj.is_dockerized = (areca_cl_path is None)
+        ctx.obj.is_dockerized = areca_cl_path is None
 
         if areca_cl_path is None:
             click.echo(
-                "Can't found areca console script, use dockerized areca ...")
+                "Can't found areca console script, use dockerized areca ..."
+            )
         else:
             click.echo("Found areca at : %s" % areca_cl_path)
     else:
-        ctx.obj.is_dockerized = (mode == "docker")
+        ctx.obj.is_dockerized = mode == "docker"
 
 
 @main.command()
-@click.argument('config', type=click.File())
+@click.argument("config", type=click.File())
 @click.pass_context
 def backup(ctx, config):
     """
@@ -392,8 +421,7 @@ def backup(ctx, config):
             source = [source]
 
         vars["src_path"] = source[0]
-        vars["project_name"] = os.path.splitext(
-            os.path.basename(source[0]))[0]
+        vars["project_name"] = os.path.splitext(os.path.basename(source[0]))[0]
         if (len(source) > 1) and (len(source[1].strip()) > 0):
             vars["project_name"] = source[1].strip()
 
@@ -414,9 +442,9 @@ def recover(ctx):
 
 
 @recover.command()
-@click.argument('config', type=click.File())
-@click.argument('name')
-@click.argument('to_path')
+@click.argument("config", type=click.File())
+@click.argument("name")
+@click.argument("to_path")
 @click.pass_context
 def proj(ctx, config, name, to_path):
     """
@@ -435,8 +463,7 @@ def proj(ctx, config, name, to_path):
         if isinstance(source, six.string_types):
             source = [source]
 
-        vars["project_name"] = os.path.splitext(
-            os.path.basename(source[0]))[0]
+        vars["project_name"] = os.path.splitext(os.path.basename(source[0]))[0]
 
         if (len(source) > 1) and (len(source[1].strip()) > 0):
             vars["project_name"] = source[1].strip()
@@ -456,12 +483,12 @@ def proj(ctx, config, name, to_path):
         return 0
 
     # If no project founded, we should raise error
-    raise click.BadArgumentUsage("Project \"%s\" not found!" % name)
+    raise click.BadArgumentUsage('Project "%s" not found!' % name)
 
 
 @recover.command()
-@click.argument('config', type=click.File())
-@click.argument('to_path')
+@click.argument("config", type=click.File())
+@click.argument("to_path")
 @click.pass_context
 def repo(ctx, config, to_path):
     """
@@ -478,14 +505,12 @@ def repo(ctx, config, to_path):
         if isinstance(source, six.string_types):
             source = [source]
 
-        vars["project_name"] = os.path.splitext(
-            os.path.basename(source[0]))[0]
+        vars["project_name"] = os.path.splitext(os.path.basename(source[0]))[0]
 
         if (len(source) > 1) and (len(source[1].strip()) > 0):
             vars["project_name"] = source[1].strip()
 
-        vars["src_path"] = os.path.join(
-            to_path, vars["project_name"])
+        vars["src_path"] = os.path.join(to_path, vars["project_name"])
 
         vars["orig_path"] = os.path.realpath(os.path.normpath(source[0]))
 
@@ -493,6 +518,7 @@ def repo(ctx, config, to_path):
             break
 
     return 0
+
 
 if __name__ == "__main__":
     # execute only if run as a script

@@ -33,7 +33,7 @@ def chown(apath, uid, gid):
 
 def normal_path(apath):
     apath = os.path.abspath(str(apath))
-    if sys.platform == 'win32':
+    if sys.platform == "win32":
         apath = apath.replace("/", "\\")
     else:
         apath = apath.replace("\\", "/")
@@ -56,7 +56,8 @@ def compute_related_path(link, target):
 
     if len(link.parents) > len(target.parents):
         return os.path.join(
-            "../" * (len(link.parents) - found_index), target.name)
+            "../" * (len(link.parents) - found_index), target.name
+        )
     elif found_index == max_parents:
         return target.name
     else:
@@ -67,4 +68,5 @@ def compute_related_path(link, target):
         # This syntax will lead python below v3.4 report error : "SyntaxError:
         # only named arguments may follow *expression"!
         return os.path.join(
-            os.path.join(*target_parents[found_index:]), target.name)
+            os.path.join(*target_parents[found_index:]), target.name
+        )

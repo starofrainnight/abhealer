@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 
-'''
+"""
 This module contained a series classes that use for maintain informations of
 Areca Backup.
-'''
+"""
 
 import pathlib
 import arrow
@@ -42,9 +42,8 @@ def int_to_folder(aint):
 
 
 class TraceInfo(object):
-
     def __init__(self, info):
-        self._parties = info.split(';')
+        self._parties = info.split(";")
 
         atype = self.type_
 
@@ -86,8 +85,11 @@ class TraceInfo(object):
         return self._group
 
     def __repr__(self):
-        return "%s(\"%s\", \"%s\")" % (
-            type(self).__qualname__, self.type_, self.path)
+        return '%s("%s", "%s")' % (
+            type(self).__qualname__,
+            self.type_,
+            self.path,
+        )
 
 
 class DataInfo(object):
@@ -136,7 +138,7 @@ class DataInfo(object):
             if not aline:
                 continue
 
-            if aline.startswith('#'):
+            if aline.startswith("#"):
                 continue
 
             info = TraceInfo(aline)
@@ -184,7 +186,7 @@ class DataInfo(object):
         return etree.fromstring(data)
 
     def _name_without_suffix(self):
-        return self.base_dir.name[:-len(self.DIR_SUFFIX)]
+        return self.base_dir.name[: -len(self.DIR_SUFFIX)]
 
     def __repr__(self):
         return "%s(%s)" % (type(self).__qualname__, int(self))
@@ -194,7 +196,6 @@ class DataInfo(object):
 
 
 class Project(object):
-
     def __init__(self, repository, cfg, adir):
         self._base_dir = Path(adir)
         self._repository = repository
@@ -226,7 +227,7 @@ class Project(object):
         return infos
 
     def __repr__(self):
-        return "%s(\"%s\")" % (type(self).__qualname__, self.name)
+        return '%s("%s")' % (type(self).__qualname__, self.name)
 
 
 class Repository(object):
@@ -238,8 +239,10 @@ class Repository(object):
         # Validate directory
         self._cfg_dir = self._base_dir / self.CFG_DIR_NAME
         if not self._cfg_dir.exists():
-            msg = ("'%s' directory not found ! The directory "
-                   "is not an Areca Backup repository: %s!")
+            msg = (
+                "'%s' directory not found ! The directory "
+                "is not an Areca Backup repository: %s!"
+            )
             msg = msg % (self.CFG_DIR_NAME, self._base_dir)
             raise NotADirectoryError(msg)
 
@@ -262,20 +265,20 @@ class Repository(object):
             history_path = subdir / "history"
             if (not history_path.exists()) or (not history_path.is_file()):
                 abhealer.logger().warn(
-                    "Found invalid project : %s" % subdir.name)
+                    "Found invalid project : %s" % subdir.name
+                )
                 continue
 
             cfg_path = self.cfg_dir / (subdir.name + ".bcfg")
-            all.append(Project(
-                self, etree.parse(str(cfg_path)), subdir))
+            all.append(Project(self, etree.parse(str(cfg_path)), subdir))
 
         return all
 
 
 class LocalArecaBackup(object):
-    '''
+    """
     The class use for maintain Areca Backup's behaviors.
-    '''
+    """
 
     def __init__(self):
         # Search areca backup script in PATH
@@ -290,11 +293,13 @@ class LocalArecaBackup(object):
 
     def backup(self, cfg_path, ws_dir):
         return subprocess.call(
-            self.gen_backup_cmd(cfg_path, ws_dir), shell=True)
+            self.gen_backup_cmd(cfg_path, ws_dir), shell=True
+        )
 
     def recover(self, cfg_path, dst_dir):
         return subprocess.call(
-            self.gen_recover_cmd(cfg_path, dst_dir), shell=True)
+            self.gen_recover_cmd(cfg_path, dst_dir), shell=True
+        )
 
     def gen_backup_cmd(self, cfg_path, ws_dir=None):
         """
@@ -311,8 +316,7 @@ class LocalArecaBackup(object):
             ws_dir = pathutils.normal_path(cfg_path).parent
 
         cmd = "cd %s; ./areca_cl.sh backup -config %s -wdir %s"
-        cmd = cmd % (self._program_path.parent,
-                     str(cfg_path), str(ws_dir))
+        cmd = cmd % (self._program_path.parent, str(cfg_path), str(ws_dir))
         return cmd
 
     def gen_recover_cmd(self, cfg_path, dst_dir):
@@ -320,18 +324,19 @@ class LocalArecaBackup(object):
         cfg_path = pathutils.normal_path(cfg_path)
         dst_dir = pathutils.normal_path(dst_dir)
 
-        cmd = ("cd %s; ./areca_cl.sh recover -config %s -destination %s "
-               "-o -nosubdir")
-        cmd = cmd % (self._program_path.parent,
-                     str(cfg_path), str(dst_dir))
+        cmd = (
+            "cd %s; ./areca_cl.sh recover -config %s -destination %s "
+            "-o -nosubdir"
+        )
+        cmd = cmd % (self._program_path.parent, str(cfg_path), str(dst_dir))
 
         return cmd
 
 
 class DockerizedArecaBackup(LocalArecaBackup):
-    '''
+    """
     The class use for maintain Dockerized Areca Backup's behaviors.
-    '''
+    """
 
     CMD_PREFIX = "docker run -t --rm starofrainnight/areca-backup "
     SRC_DIR = "/opt/source"

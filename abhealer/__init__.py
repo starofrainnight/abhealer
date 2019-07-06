@@ -3,5 +3,5 @@
 """Top-level package for abhealer."""
 
 __author__ = """Hong-She Liang"""
-__email__ = 'starofrainnight@gmail.com'
-__version__ = '0.5.1'
+__email__ = "starofrainnight@gmail.com"
+__version__ = "0.5.1"
