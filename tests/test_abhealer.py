@@ -5,10 +5,7 @@
 
 import pytest
 
-from contextlib import contextmanager
 from click.testing import CliRunner
-
-from abhealer import abhealer
 from abhealer.__main__ import main
 
 

@@ -2,7 +2,6 @@
 
 import os
 import os.path
-import sys
 import click
 import six
 import io
@@ -18,12 +17,10 @@ import stat
 import pwd
 import grp
 import copy
-from . import arecabackup
 from .pathutils import (
     get_path_owner,
     get_path_group,
     chown,
-    normal_path,
     compute_related_path,
 )
 from whichcraft import which
@@ -256,9 +253,9 @@ def exec_(is_backup, is_dockerized, vars):
     fixed_config_file_path = os.path.join(
         temp_dir.name, fixed_config_file_name
     )
-    fixed_config_file_client_path = os.path.join(
-        workspace_client_dir, fixed_config_file_name
-    )
+    # fixed_config_file_client_path = os.path.join(
+    #     workspace_client_dir, fixed_config_file_name
+    # )
 
     # Change paths
     vars["src_path"] = source_client_dir

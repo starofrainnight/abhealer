@@ -5,7 +5,6 @@ This module contained a series classes that use for maintain informations of
 Areca Backup.
 """
 
-import pathlib
 import arrow
 import zipfile
 import gzip
@@ -180,7 +179,7 @@ class DataInfo(object):
         <property key="Version date" value="August 26, 2015" />
         </properties>
         </manifest>
-        """
+        """  # noqa
 
         data = self._extract_data("manifest")
         return etree.fromstring(data)
