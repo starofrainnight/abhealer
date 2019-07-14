@@ -167,13 +167,13 @@ def recover_dirs(is_dockerized, orig_dir, source_dir, dest_dir):
                 source_path.unlink()
                 source_path.symlink_to(client_link_path)
 
-        if (get_path_owner(source_path) != v[owner_index]) or (
-            get_path_group(source_path) != v[group_index]
-        ):
-            if sys.platform != "win32":
-                import pwd
-                import grp
+        if sys.platform != "win32":
+            import pwd
+            import grp
 
+            if (get_path_owner(source_path) != v[owner_index]) or (
+                get_path_group(source_path) != v[group_index]
+            ):
                 chown(
                     str(source_path),
                     pwd.getpwnam(v[owner_index]).pw_uid,

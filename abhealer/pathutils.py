@@ -2,12 +2,15 @@
 
 import sys
 import os.path
-import pwd
-import grp
 import pathlib
 
 
 def get_path_owner(apath):
+    if sys.platform == "win32":
+        return ""
+
+    import pwd
+
     apath = str(apath)
     if os.path.islink(apath):
         return pwd.getpwuid(os.lstat(apath).st_uid).pw_name
@@ -16,6 +19,11 @@ def get_path_owner(apath):
 
 
 def get_path_group(apath):
+    if sys.platform == "win32":
+        return ""
+
+    import grp
+
     apath = str(apath)
     if os.path.islink(apath):
         return grp.getgrgid(os.lstat(apath).st_gid).gr_name
