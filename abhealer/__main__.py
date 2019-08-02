@@ -174,11 +174,19 @@ def recover_dirs(is_dockerized, orig_dir, source_dir, dest_dir):
             if (get_path_owner(source_path) != v[owner_index]) or (
                 get_path_group(source_path) != v[group_index]
             ):
-                chown(
-                    str(source_path),
-                    pwd.getpwnam(v[owner_index]).pw_uid,
-                    grp.getgrnam(v[group_index]).gr_gid,
-                )
+                try:
+                    chown(
+                        str(source_path),
+                        pwd.getpwnam(v[owner_index]).pw_uid,
+                        grp.getgrnam(v[group_index]).gr_gid,
+                    )
+                except KeyError:
+                    # No such a group or owner name
+                    click.echo(
+                        'No such owner or group : ("%s", "%s") !'
+                        % (v[owner_index], v[group_index])
+                    )
+                    pass
 
     print("Recover directories permissions completed!")
 
