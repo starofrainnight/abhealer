@@ -306,10 +306,16 @@ def exec_(is_backup, is_dockerized, vars):
                     % (config_file_client_path, workspace_client_dir)
                 )
             else:
+                date_str = vars.get("date", None)
+                if None == date_str:
+                    date_str = ""
+                else:
+                    date_str = "-date %s" % date_str
+
                 f.write(
                     "./areca_cl.sh recover "
-                    "-config %s -destination %s -o -nosubdir\n"
-                    % (config_file_client_path, source_client_dir)
+                    "-config %s -destination %s -o -nosubdir %s\n"
+                    % (config_file_client_path, source_client_dir, date_str)
                 )
             f.write("\n")
         os.system("chmod +x %s" % backup_script_file_path)
@@ -450,11 +456,17 @@ def recover(ctx):
 
 
 @recover.command()
+@click.option(
+    "--date",
+    default=None,
+    required=False,
+    help="Recovery date, format as YYYY-MM-DD",
+)
 @click.argument("config", type=click.File())
 @click.argument("name")
 @click.argument("to_path")
 @click.pass_context
-def proj(ctx, config, name, to_path):
+def proj(ctx, date, config, name, to_path):
     """
     Only recover specific project
 
@@ -482,6 +494,7 @@ def proj(ctx, config, name, to_path):
 
         vars["src_path"] = to_path
         vars["orig_path"] = os.path.realpath(os.path.normpath(source[0]))
+        vars["date"] = date
 
         ret = exec_(False, ctx.obj.is_dockerized, vars)
         if ret:
