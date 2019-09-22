@@ -25,7 +25,7 @@ tests_requires = [
 
 setup(
     name="abhealer",
-    version="0.5.2",
+    version="0.5.3",
     description="An Areca Backup helper program",
     long_description=long_description,
     author="Hong-She Liang",
