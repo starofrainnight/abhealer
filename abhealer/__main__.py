@@ -307,7 +307,7 @@ def exec_(is_backup, is_dockerized, vars):
                 )
             else:
                 date_str = vars.get("date", None)
-                if None == date_str:
+                if date_str is None:
                     date_str = ""
                 else:
                     date_str = "-date %s" % date_str
